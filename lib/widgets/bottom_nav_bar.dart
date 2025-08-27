@@ -22,6 +22,8 @@ class BottomNavBar extends StatelessWidget {
       selectedItemColor: colorScheme.primary,
       unselectedItemColor: colorScheme.onSurfaceVariant,
       backgroundColor: colorScheme.surfaceContainer,
+      showSelectedLabels: false,
+      iconSize: 28.0,
       items: const [
         BottomNavigationBarItem(
           icon: Icon(Icons.dashboard_outlined),
@@ -34,6 +36,10 @@ class BottomNavBar extends StatelessWidget {
         BottomNavigationBarItem(
           icon: Icon(Icons.school_outlined),
           label: 'Courses',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.assignment_outlined),
+          label: 'Assignments',
         ),
       ],
     );

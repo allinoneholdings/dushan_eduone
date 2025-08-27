@@ -1,4 +1,5 @@
 import 'package:edu_one/screens/admin/page_admin_dashboard.dart';
+import 'package:edu_one/screens/admin/page_assignments.dart';
 import 'package:edu_one/screens/admin/page_courses.dart';
 import 'package:edu_one/screens/admin/page_users.dart';
 import 'package:flutter/material.dart';
@@ -20,6 +21,7 @@ class _AdminNavigationState extends State<AdminNavigation> {
     const PageAdminDashboard(),
     PageUsers(),
     PageCourses(),
+    PageAssignments()
   ];
 
   void _onItemTapped(int index) {

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../widgets/custom_text_form_field.dart';
-import 'add_edit_course_page.dart'; // Import the AddEditCoursePage
+import 'add_edit_assignment_page.dart';
 
-class PageCourses extends StatelessWidget {
-  PageCourses({super.key});
+class PageAssignments extends StatelessWidget {
+  PageAssignments({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -14,18 +14,18 @@ class PageCourses extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'Manage Courses',
+          'Assignments',
           style: textTheme.headlineLarge!.copyWith(fontWeight: FontWeight.bold),
         ),
         actions: [
           IconButton(
             icon: Icon(Icons.add, color: colorScheme.onSurface),
             onPressed: () {
-              // Navigate to the AddEditCoursePage to add a new course
+              // Navigate to the AddEditAssignmentPage to add a new assignment
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const AddEditCoursePage(),
+                  builder: (context) => const AddEditAssignmentPage(),
                 ),
               );
             },
@@ -42,19 +42,19 @@ class PageCourses extends StatelessWidget {
               // Search Field
               CustomTextFormField(
                 textController: TextEditingController(),
-                hint: 'Search courses by name or instructor',
+                hint: 'Search assignments by title or course',
                 validator: (value) => null, // No validation needed for search
                 keyboardType: TextInputType.text,
               ),
               const SizedBox(height: 24.0),
 
-              // Course List (using a mock list for demonstration)
+              // Assignment List (using a mock list for demonstration)
               Expanded(
                 child: ListView.builder(
-                  itemCount: _mockCourses.length,
+                  itemCount: _mockAssignments.length,
                   itemBuilder: (context, index) {
-                    final course = _mockCourses[index];
-                    return _buildCourseCard(context, course);
+                    final assignment = _mockAssignments[index];
+                    return _buildAssignmentCard(context, assignment);
                   },
                 ),
               ),
@@ -65,7 +65,10 @@ class PageCourses extends StatelessWidget {
     );
   }
 
-  Widget _buildCourseCard(BuildContext context, Map<String, dynamic> course) {
+  Widget _buildAssignmentCard(
+    BuildContext context,
+    Map<String, dynamic> assignment,
+  ) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
@@ -78,10 +81,9 @@ class PageCourses extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 16.0),
       child: InkWell(
         onTap: () {
-          // You can navigate to a course details page here if needed
-          // For now, it's a simple tap handler
+          // Navigate to a details page or show a dialog
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Tapped on ${course['name']}')),
+            SnackBar(content: Text('Tapped on ${assignment['title']}')),
           );
         },
         borderRadius: BorderRadius.circular(12.0),
@@ -94,7 +96,7 @@ class PageCourses extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      course['name']!,
+                      assignment['title']!,
                       style: textTheme.bodyMedium!.copyWith(
                         fontWeight: FontWeight.bold,
                         color: colorScheme.onSurface,
@@ -102,7 +104,14 @@ class PageCourses extends StatelessWidget {
                     ),
                     const SizedBox(height: 4.0),
                     Text(
-                      'Instructor: ${course['instructor']!}',
+                      'Course: ${assignment['course']!}',
+                      style: textTheme.labelSmall!.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 4.0),
+                    Text(
+                      'Due Date: ${assignment['dueDate']!}',
                       style: textTheme.labelSmall!.copyWith(
                         color: colorScheme.onSurfaceVariant,
                       ),
@@ -114,11 +123,13 @@ class PageCourses extends StatelessWidget {
                 children: [
                   IconButton(
                     onPressed: () {
-                      // Navigate to the AddEditCoursePage to edit the course
+                      // Navigate to the AddEditAssignmentPage to edit the assignment
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => AddEditCoursePage(course: course),
+                          builder:
+                              (context) =>
+                                  AddEditAssignmentPage(assignment: assignment),
                         ),
                       );
                     },
@@ -128,7 +139,9 @@ class PageCourses extends StatelessWidget {
                     onPressed: () {
                       // Delete functionality
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Deleting ${course['name']}')),
+                        SnackBar(
+                          content: Text('Deleting ${assignment['title']}'),
+                        ),
                       );
                     },
                     icon: Icon(Icons.delete_outline, color: colorScheme.error),
@@ -143,9 +156,21 @@ class PageCourses extends StatelessWidget {
   }
 
   // Mock data for demonstration purposes
-  final List<Map<String, dynamic>> _mockCourses = [
-    {'name': 'Introduction to Flutter', 'instructor': 'John Doe'},
-    {'name': 'Dart Programming Basics', 'instructor': 'Jane Smith'},
-    {'name': 'Advanced UI/UX Design', 'instructor': 'Mark Johnson'},
+  final List<Map<String, dynamic>> _mockAssignments = [
+    {
+      'title': 'Module 1 Quiz',
+      'course': 'Introduction to Flutter',
+      'dueDate': '2025-09-01',
+    },
+    {
+      'title': 'Homework 2',
+      'course': 'Dart Programming Basics',
+      'dueDate': '2025-09-05',
+    },
+    {
+      'title': 'Final Project Proposal',
+      'course': 'Advanced UI/UX Design',
+      'dueDate': '2025-09-10',
+    },
   ];
 }
