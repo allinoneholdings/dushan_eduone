@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "629894139299",
+    "project_id": "eduone-da638",
+    "storage_bucket": "eduone-da638.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:629894139299:android:471c283dc27e078c815e16",
+        "android_client_info": {
+          "package_name": "com.allinone.edu_one"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCIMRVrJ05A8MJpzWysa4tVkCAOa7_FeSA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,9 +1,10 @@
+import 'package:edu_one/models/course_model.dart';
 import 'package:flutter/material.dart';
-import 'manage_assignments_page.dart';
-import 'manage_enrollments_page.dart';
+import '../assignments/manage_assignments_page.dart';
+import '../manage_enrollments_page.dart';
 
 class CourseDetailsPage extends StatelessWidget {
-  final Map<String, dynamic> course;
+  final CourseModel course;
 
   const CourseDetailsPage({super.key, required this.course});
 
@@ -29,7 +30,7 @@ class CourseDetailsPage extends StatelessWidget {
             children: [
               // Course Information Section
               Text(
-                course['title']!,
+                course.name,
                 style: textTheme.headlineLarge!.copyWith(
                   fontWeight: FontWeight.bold,
                   color: colorScheme.onSurface,
@@ -37,7 +38,7 @@ class CourseDetailsPage extends StatelessWidget {
               ),
               const SizedBox(height: 8.0),
               Text(
-                'This course is taught by ${course['staff']} and covers topics in ${course['title']}.',
+                'This course is taught by ${course.instructor} and covers topics in ${course.name}.',
                 style: textTheme.labelSmall!.copyWith(
                   color: colorScheme.onSurfaceVariant,
                 ),

@@ -1,7 +1,8 @@
+import 'package:edu_one/models/course_model.dart';
 import 'package:flutter/material.dart';
 
 class ManageAssignmentsPage extends StatelessWidget {
-  final Map<String, dynamic> course;
+  final CourseModel course;
 
   ManageAssignmentsPage({super.key, required this.course});
 
@@ -41,7 +42,7 @@ class ManageAssignmentsPage extends StatelessWidget {
             children: [
               // Course Title for context
               Text(
-                'Course: ${course['title']!}',
+                'Course: ${course.name}',
                 style: textTheme.bodyMedium!.copyWith(
                   fontWeight: FontWeight.bold,
                   color: colorScheme.onSurface,

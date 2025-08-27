@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
-
-import '../../widgets/custom_text_form_field.dart';
-import 'add_edit_course_page.dart'; // Import the AddEditCoursePage
+import '../../../models/course_model.dart';
+import '../../../services/firestore_service.dart';
+import '../../../widgets/custom_text_form_field.dart';
+import 'add_edit_course_page.dart';
+import 'course_details_page.dart';
 
 class PageCourses extends StatelessWidget {
-  PageCourses({super.key});
+  const PageCourses({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +23,6 @@ class PageCourses extends StatelessWidget {
           IconButton(
             icon: Icon(Icons.add, color: colorScheme.onSurface),
             onPressed: () {
-              // Navigate to the AddEditCoursePage to add a new course
               Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -43,18 +44,40 @@ class PageCourses extends StatelessWidget {
               CustomTextFormField(
                 textController: TextEditingController(),
                 hint: 'Search courses by name or instructor',
-                validator: (value) => null, // No validation needed for search
+                validator: (value) => null,
                 keyboardType: TextInputType.text,
               ),
               const SizedBox(height: 24.0),
 
-              // Course List (using a mock list for demonstration)
+              // Use a StreamBuilder to listen for real-time data from Firestore
               Expanded(
-                child: ListView.builder(
-                  itemCount: _mockCourses.length,
-                  itemBuilder: (context, index) {
-                    final course = _mockCourses[index];
-                    return _buildCourseCard(context, course);
+                child: StreamBuilder<List<CourseModel>>(
+                  stream: FirestoreService().getCourses(),
+                  builder: (context, snapshot) {
+                    // Show a loading indicator while data is being fetched
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+
+                    // Show an error message if something went wrong
+                    if (snapshot.hasError) {
+                      return Center(child: Text('Error: ${snapshot.error}'));
+                    }
+
+                    // If there's no data, show a message
+                    if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                      return const Center(child: Text('No courses found.'));
+                    }
+
+                    // Display the list of courses from Firestore
+                    final courses = snapshot.data!;
+                    return ListView.builder(
+                      itemCount: courses.length,
+                      itemBuilder: (context, index) {
+                        final course = courses[index];
+                        return _buildCourseCard(context, course);
+                      },
+                    );
                   },
                 ),
               ),
@@ -65,7 +88,7 @@ class PageCourses extends StatelessWidget {
     );
   }
 
-  Widget _buildCourseCard(BuildContext context, Map<String, dynamic> course) {
+  Widget _buildCourseCard(BuildContext context, CourseModel course) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
@@ -78,10 +101,11 @@ class PageCourses extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 16.0),
       child: InkWell(
         onTap: () {
-          // You can navigate to a course details page here if needed
-          // For now, it's a simple tap handler
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Tapped on ${course['name']}')),
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => CourseDetailsPage(course: course),
+            ),
           );
         },
         borderRadius: BorderRadius.circular(12.0),
@@ -94,7 +118,7 @@ class PageCourses extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      course['name']!,
+                      course.name,
                       style: textTheme.bodyMedium!.copyWith(
                         fontWeight: FontWeight.bold,
                         color: colorScheme.onSurface,
@@ -102,7 +126,7 @@ class PageCourses extends StatelessWidget {
                     ),
                     const SizedBox(height: 4.0),
                     Text(
-                      'Instructor: ${course['instructor']!}',
+                      'Instructor: ${course.instructor}',
                       style: textTheme.labelSmall!.copyWith(
                         color: colorScheme.onSurfaceVariant,
                       ),
@@ -118,18 +142,23 @@ class PageCourses extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => AddEditCoursePage(course: course),
+                          builder:
+                              (context) =>
+                                  AddEditCoursePage(course: course.toMap()),
                         ),
                       );
                     },
                     icon: Icon(Icons.edit_outlined, color: colorScheme.primary),
                   ),
                   IconButton(
-                    onPressed: () {
+                    onPressed: () async {
                       // Delete functionality
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Deleting ${course['name']}')),
-                      );
+                      await FirestoreService().deleteCourse(course.id);
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Deleted ${course.name}')),
+                        );
+                      }
                     },
                     icon: Icon(Icons.delete_outline, color: colorScheme.error),
                   ),
@@ -141,11 +170,4 @@ class PageCourses extends StatelessWidget {
       ),
     );
   }
-
-  // Mock data for demonstration purposes
-  final List<Map<String, dynamic>> _mockCourses = [
-    {'name': 'Introduction to Flutter', 'instructor': 'John Doe'},
-    {'name': 'Dart Programming Basics', 'instructor': 'Jane Smith'},
-    {'name': 'Advanced UI/UX Design', 'instructor': 'Mark Johnson'},
-  ];
 }

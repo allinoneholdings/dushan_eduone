@@ -1,15 +1,13 @@
+import 'package:edu_one/widgets/custom_text_area.dart';
 import 'package:flutter/material.dart';
-
-import '../../widgets/custom_text_area.dart';
-import '../../widgets/custom_text_form_field.dart';
+import '../../../models/course_model.dart';
+import '../../../services/firestore_service.dart';
+import '../../../widgets/custom_text_form_field.dart';
 
 class AddEditCoursePage extends StatefulWidget {
   final Map<String, dynamic>? course;
 
-  const AddEditCoursePage({
-    super.key,
-    this.course,
-  });
+  const AddEditCoursePage({super.key, this.course});
 
   @override
   State<AddEditCoursePage> createState() => _AddEditCoursePageState();
@@ -20,6 +18,7 @@ class _AddEditCoursePageState extends State<AddEditCoursePage> {
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _instructorController = TextEditingController();
+  final FirestoreService _firestoreService = FirestoreService();
 
   @override
   void initState() {
@@ -40,26 +39,38 @@ class _AddEditCoursePageState extends State<AddEditCoursePage> {
     super.dispose();
   }
 
-  void _saveForm() {
+  void _saveForm() async {
     if (_formKey.currentState!.validate()) {
-      final courseData = {
-        'name': _nameController.text,
-        'description': _descriptionController.text,
-        'instructor': _instructorController.text,
-      };
+      final isEditing = widget.course != null;
+      final String courseId = isEditing ? widget.course!['id']! : '';
 
-      // Handle the save logic (e.g., call a service to save to a database)
-      // This is a placeholder for actual functionality
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            widget.course == null
-                ? 'Course added successfully!'
-                : 'Course updated successfully!',
-          ),
-        ),
+      final courseModel = CourseModel(
+        id: courseId,
+        name: _nameController.text,
+        description: _descriptionController.text,
+        instructor: _instructorController.text,
       );
-      Navigator.pop(context); // Go back to the previous page
+
+      try {
+        if (isEditing) {
+          // Update an existing course
+          await _firestoreService.updateCourse(courseModel);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Course updated successfully!')),
+          );
+        } else {
+          // Add a new course
+          await _firestoreService.addCourse(courseModel);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Course added successfully!')),
+          );
+        }
+        Navigator.pop(context); // Go back to the previous page
+      } catch (e) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to save course: $e')));
+      }
     }
   }
 
@@ -91,7 +102,7 @@ class _AddEditCoursePageState extends State<AddEditCoursePage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Course Name Field
+                // Name Field
                 CustomTextFormField(
                   textController: _nameController,
                   hint: 'Course Name',
@@ -105,7 +116,7 @@ class _AddEditCoursePageState extends State<AddEditCoursePage> {
                 ),
                 const SizedBox(height: 16.0),
 
-                // Course Description Field
+                // Description Field
                 CustomTextFormArea(
                   textController: _descriptionController,
                   hint: 'Description',
@@ -120,7 +131,7 @@ class _AddEditCoursePageState extends State<AddEditCoursePage> {
                 ),
                 const SizedBox(height: 16.0),
 
-                // Instructor Name Field
+                // Instructor Field
                 CustomTextFormField(
                   textController: _instructorController,
                   hint: 'Instructor Name',

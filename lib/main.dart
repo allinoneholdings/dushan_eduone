@@ -1,15 +1,16 @@
 import 'package:edu_one/screens/admin/admin_navigation.dart';
-import 'package:edu_one/screens/admin/page_admin_dashboard.dart';
 import 'package:edu_one/config/font_profile.dart';
 import 'package:edu_one/signin.dart';
 import 'package:edu_one/signup.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import 'config/color_profile.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   runApp(const MyApp());
 }
 
@@ -52,8 +53,8 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorProfile.dark,
       ),
       themeMode: ThemeMode.system,
-      // home: const PageAdminDashboard(),
 
+      // home: const PageAdminDashboard(),
     );
   }
 }

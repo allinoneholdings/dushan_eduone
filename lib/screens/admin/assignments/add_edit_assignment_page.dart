@@ -1,7 +1,7 @@
 import 'package:edu_one/widgets/custom_text_area.dart';
 import 'package:flutter/material.dart';
 
-import '../../widgets/custom_text_form_field.dart';
+import '../../../widgets/custom_text_form_field.dart';
 
 class AddEditAssignmentPage extends StatefulWidget {
   final Map<String, dynamic>? assignment;

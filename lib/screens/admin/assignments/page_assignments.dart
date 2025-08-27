@@ -1,10 +1,10 @@
-import 'package:edu_one/screens/admin/user_details_page.dart';
 import 'package:flutter/material.dart';
-import '../../widgets/custom_text_form_field.dart';
-import 'add_edit_user_page.dart';
 
-class PageUsers extends StatelessWidget {
-  PageUsers({super.key});
+import '../../../widgets/custom_text_form_field.dart';
+import 'add_edit_assignment_page.dart';
+
+class PageAssignments extends StatelessWidget {
+  PageAssignments({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -14,18 +14,18 @@ class PageUsers extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'Users',
+          'Assignments',
           style: textTheme.headlineLarge!.copyWith(fontWeight: FontWeight.bold),
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.person_add_alt_1, color: colorScheme.onSurface),
+            icon: Icon(Icons.add, color: colorScheme.onSurface),
             onPressed: () {
-              // Navigate to the AddEditUserPage without passing any data
+              // Navigate to the AddEditAssignmentPage to add a new assignment
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const AddEditUserPage(),
+                  builder: (context) => const AddEditAssignmentPage(),
                 ),
               );
             },
@@ -42,19 +42,19 @@ class PageUsers extends StatelessWidget {
               // Search Field
               CustomTextFormField(
                 textController: TextEditingController(),
-                hint: 'Search users by name or email',
+                hint: 'Search assignments by title or course',
                 validator: (value) => null, // No validation needed for search
                 keyboardType: TextInputType.text,
               ),
               const SizedBox(height: 24.0),
 
-              // User List (using a mock list for demonstration)
+              // Assignment List (using a mock list for demonstration)
               Expanded(
                 child: ListView.builder(
-                  itemCount: _mockUsers.length,
+                  itemCount: _mockAssignments.length,
                   itemBuilder: (context, index) {
-                    final user = _mockUsers[index];
-                    return _buildUserCard(context, user);
+                    final assignment = _mockAssignments[index];
+                    return _buildAssignmentCard(context, assignment);
                   },
                 ),
               ),
@@ -65,7 +65,10 @@ class PageUsers extends StatelessWidget {
     );
   }
 
-  Widget _buildUserCard(BuildContext context, Map<String, dynamic> user) {
+  Widget _buildAssignmentCard(
+    BuildContext context,
+    Map<String, dynamic> assignment,
+  ) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
@@ -78,12 +81,9 @@ class PageUsers extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 16.0),
       child: InkWell(
         onTap: () {
-          // Navigate to the UserDetailsPage and pass the user data
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => UserDetailsPage(user: user),
-            ),
+          // Navigate to a details page or show a dialog
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Tapped on ${assignment['title']}')),
           );
         },
         borderRadius: BorderRadius.circular(12.0),
@@ -96,7 +96,7 @@ class PageUsers extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      user['name']!,
+                      assignment['title']!,
                       style: textTheme.bodyMedium!.copyWith(
                         fontWeight: FontWeight.bold,
                         color: colorScheme.onSurface,
@@ -104,14 +104,14 @@ class PageUsers extends StatelessWidget {
                     ),
                     const SizedBox(height: 4.0),
                     Text(
-                      'Role: ${user['role']!}',
+                      'Course: ${assignment['course']!}',
                       style: textTheme.labelSmall!.copyWith(
                         color: colorScheme.onSurfaceVariant,
                       ),
                     ),
                     const SizedBox(height: 4.0),
                     Text(
-                      user['email']!,
+                      'Due Date: ${assignment['dueDate']!}',
                       style: textTheme.labelSmall!.copyWith(
                         color: colorScheme.onSurfaceVariant,
                       ),
@@ -123,11 +123,13 @@ class PageUsers extends StatelessWidget {
                 children: [
                   IconButton(
                     onPressed: () {
-                      // Navigate to the AddEditUserPage and pass the user data for editing
+                      // Navigate to the AddEditAssignmentPage to edit the assignment
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => AddEditUserPage(user: user),
+                          builder:
+                              (context) =>
+                                  AddEditAssignmentPage(assignment: assignment),
                         ),
                       );
                     },
@@ -137,7 +139,9 @@ class PageUsers extends StatelessWidget {
                     onPressed: () {
                       // Delete functionality
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Deleting ${user['name']}')),
+                        SnackBar(
+                          content: Text('Deleting ${assignment['title']}'),
+                        ),
                       );
                     },
                     icon: Icon(Icons.delete_outline, color: colorScheme.error),
@@ -152,10 +156,21 @@ class PageUsers extends StatelessWidget {
   }
 
   // Mock data for demonstration purposes
-  final List<Map<String, dynamic>> _mockUsers = [
-    {'name': 'John Doe', 'email': 'john.doe@example.com', 'role': 'Student'},
-    {'name': 'Jane Smith', 'email': 'jane.smith@example.com', 'role': 'Staff'},
-    {'name': 'Mark Johnson', 'email': 'mark.j@example.com', 'role': 'Student'},
-    {'name': 'Sarah Lee', 'email': 'sarah.lee@example.com', 'role': 'Staff'},
+  final List<Map<String, dynamic>> _mockAssignments = [
+    {
+      'title': 'Module 1 Quiz',
+      'course': 'Introduction to Flutter',
+      'dueDate': '2025-09-01',
+    },
+    {
+      'title': 'Homework 2',
+      'course': 'Dart Programming Basics',
+      'dueDate': '2025-09-05',
+    },
+    {
+      'title': 'Final Project Proposal',
+      'course': 'Advanced UI/UX Design',
+      'dueDate': '2025-09-10',
+    },
   ];
 }

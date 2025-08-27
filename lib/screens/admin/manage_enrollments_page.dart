@@ -1,8 +1,9 @@
+import 'package:edu_one/models/course_model.dart';
 import 'package:flutter/material.dart';
 import '../../widgets/custom_text_form_field.dart';
 
 class ManageEnrollmentsPage extends StatelessWidget {
-  final Map<String, dynamic> course;
+  final CourseModel course;
 
   ManageEnrollmentsPage({super.key, required this.course});
 
@@ -42,7 +43,7 @@ class ManageEnrollmentsPage extends StatelessWidget {
             children: [
               // Course Title for context
               Text(
-                'Course: ${course['title']!}',
+                'Course: ${course.name}',
                 style: textTheme.bodyMedium!.copyWith(
                   fontWeight: FontWeight.bold,
                   color: colorScheme.onSurface,

@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../widgets/custom_text_form_field.dart';
+import 'add_edit_user_page.dart';
+import 'user_details_page.dart';
+import '../../../services/firestore_service.dart';
+import '../../../models/user_model.dart';
 
-import '../../widgets/custom_text_form_field.dart';
-import 'add_edit_assignment_page.dart';
-
-class PageAssignments extends StatelessWidget {
-  PageAssignments({super.key});
+class PageUsers extends StatelessWidget {
+  const PageUsers({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -14,18 +17,18 @@ class PageAssignments extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'Assignments',
+          'Users',
           style: textTheme.headlineLarge!.copyWith(fontWeight: FontWeight.bold),
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.add, color: colorScheme.onSurface),
+            icon: Icon(Icons.person_add_alt_1, color: colorScheme.onSurface),
             onPressed: () {
-              // Navigate to the AddEditAssignmentPage to add a new assignment
+              // Navigate to the AddEditUserPage to add a new user
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const AddEditAssignmentPage(),
+                  builder: (context) => const AddEditUserPage(),
                 ),
               );
             },
@@ -42,19 +45,43 @@ class PageAssignments extends StatelessWidget {
               // Search Field
               CustomTextFormField(
                 textController: TextEditingController(),
-                hint: 'Search assignments by title or course',
+                hint: 'Search users by name or email',
                 validator: (value) => null, // No validation needed for search
                 keyboardType: TextInputType.text,
               ),
               const SizedBox(height: 24.0),
 
-              // Assignment List (using a mock list for demonstration)
+              // Use a StreamBuilder to listen for real-time data from Firestore
               Expanded(
-                child: ListView.builder(
-                  itemCount: _mockAssignments.length,
-                  itemBuilder: (context, index) {
-                    final assignment = _mockAssignments[index];
-                    return _buildAssignmentCard(context, assignment);
+                child: StreamBuilder<List<UserModel>>(
+                  stream: FirestoreService().getUsers(),
+                  builder: (context, snapshot) {
+                    // Show a loading indicator while data is being fetched
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+
+                    // Show an error message if something went wrong
+                    if (snapshot.hasError) {
+                      return Center(
+                        child: Text('Error: ${snapshot.error}'),
+                      );
+                    }
+
+                    // If there's no data, show a message
+                    if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                      return const Center(child: Text('No users found.'));
+                    }
+
+                    // Display the list of users from Firestore
+                    final users = snapshot.data!;
+                    return ListView.builder(
+                      itemCount: users.length,
+                      itemBuilder: (context, index) {
+                        final user = users[index];
+                        return _buildUserCard(context, user);
+                      },
+                    );
                   },
                 ),
               ),
@@ -65,10 +92,7 @@ class PageAssignments extends StatelessWidget {
     );
   }
 
-  Widget _buildAssignmentCard(
-    BuildContext context,
-    Map<String, dynamic> assignment,
-  ) {
+  Widget _buildUserCard(BuildContext context, UserModel user) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
@@ -81,9 +105,12 @@ class PageAssignments extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 16.0),
       child: InkWell(
         onTap: () {
-          // Navigate to a details page or show a dialog
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Tapped on ${assignment['title']}')),
+          // Navigate to the UserDetailsPage and pass the user data
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => UserDetailsPage(user: user),
+            ),
           );
         },
         borderRadius: BorderRadius.circular(12.0),
@@ -96,7 +123,7 @@ class PageAssignments extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      assignment['title']!,
+                      user.name,
                       style: textTheme.bodyMedium!.copyWith(
                         fontWeight: FontWeight.bold,
                         color: colorScheme.onSurface,
@@ -104,14 +131,14 @@ class PageAssignments extends StatelessWidget {
                     ),
                     const SizedBox(height: 4.0),
                     Text(
-                      'Course: ${assignment['course']!}',
+                      'Role: ${user.role}',
                       style: textTheme.labelSmall!.copyWith(
                         color: colorScheme.onSurfaceVariant,
                       ),
                     ),
                     const SizedBox(height: 4.0),
                     Text(
-                      'Due Date: ${assignment['dueDate']!}',
+                      user.email,
                       style: textTheme.labelSmall!.copyWith(
                         color: colorScheme.onSurfaceVariant,
                       ),
@@ -123,26 +150,25 @@ class PageAssignments extends StatelessWidget {
                 children: [
                   IconButton(
                     onPressed: () {
-                      // Navigate to the AddEditAssignmentPage to edit the assignment
+                      // Navigate to the AddEditUserPage and pass the user data for editing
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder:
-                              (context) =>
-                                  AddEditAssignmentPage(assignment: assignment),
+                          builder: (context) => AddEditUserPage(user: user.toMap()),
                         ),
                       );
                     },
                     icon: Icon(Icons.edit_outlined, color: colorScheme.primary),
                   ),
                   IconButton(
-                    onPressed: () {
+                    onPressed: () async {
                       // Delete functionality
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Deleting ${assignment['title']}'),
-                        ),
-                      );
+                      await FirestoreService().deleteUser(user.id);
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Deleted ${user.name}')),
+                        );
+                      }
                     },
                     icon: Icon(Icons.delete_outline, color: colorScheme.error),
                   ),
@@ -154,23 +180,4 @@ class PageAssignments extends StatelessWidget {
       ),
     );
   }
-
-  // Mock data for demonstration purposes
-  final List<Map<String, dynamic>> _mockAssignments = [
-    {
-      'title': 'Module 1 Quiz',
-      'course': 'Introduction to Flutter',
-      'dueDate': '2025-09-01',
-    },
-    {
-      'title': 'Homework 2',
-      'course': 'Dart Programming Basics',
-      'dueDate': '2025-09-05',
-    },
-    {
-      'title': 'Final Project Proposal',
-      'course': 'Advanced UI/UX Design',
-      'dueDate': '2025-09-10',
-    },
-  ];
 }
