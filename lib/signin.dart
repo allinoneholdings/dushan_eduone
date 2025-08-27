@@ -3,7 +3,8 @@ import 'package:edu_one/widgets/custom_filled_button.dart';
 import 'package:edu_one/widgets/custom_text.dart';
 import 'package:edu_one/widgets/custom_text_form_field.dart';
 import 'package:flutter/material.dart';
-
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:edu_one/services/auth_service.dart'; // Import the AuthService class
 
 class SignIn extends StatefulWidget {
   const SignIn({super.key});
@@ -16,6 +17,8 @@ class _SignInState extends State<SignIn> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  final AuthService _authService =
+      AuthService(); // Create an instance of AuthService
   bool _isSpinKitLoaded = false;
 
   @override
@@ -27,19 +30,19 @@ class _SignInState extends State<SignIn> {
       appBar: AppBar(
         title: RichText(
           text: TextSpan(
-            style: textTheme.headlineLarge, // Use the base style from your theme
+            style: textTheme.headlineLarge,
             children: <TextSpan>[
               TextSpan(
                 text: 'Edu',
                 style: TextStyle(
-                  color: colorScheme.primary, // First color for 'Edu'
+                  color: colorScheme.primary,
                   fontWeight: FontWeight.bold,
                 ),
               ),
               TextSpan(
                 text: 'One',
                 style: TextStyle(
-                  color: colorScheme.secondary, // Second color for 'One'
+                  color: colorScheme.secondary,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -52,7 +55,10 @@ class _SignInState extends State<SignIn> {
         child: Stack(
           children: [
             SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 48.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 24.0,
+                vertical: 48.0,
+              ),
               child: Form(
                 key: _formKey,
                 child: Column(
@@ -114,11 +120,12 @@ class _SignInState extends State<SignIn> {
                     Align(
                       alignment: Alignment.centerRight,
                       child: InkWell(
-                        onTap: () =>  SnackBarHelper.show(
-                          context,
-                          'Coming soon, Please contact the administrator',
-                          isError: true,
-                        ),
+                        onTap:
+                            () => SnackBarHelper.show(
+                              context,
+                              'Coming soon, Please contact the administrator',
+                              isError: true,
+                            ),
                         child: Text(
                           "Forgot password?",
                           style: textTheme.labelSmall!.copyWith(
@@ -130,13 +137,7 @@ class _SignInState extends State<SignIn> {
                     ),
                     const SizedBox(height: 48.0),
                     CustomFilledButton(
-                      onPressed: () {
-                        if (_formKey.currentState?.validate() == true) {
-                          setState(() {
-                            _isSpinKitLoaded = true;
-                          });
-                        }
-                      },
+                      onPressed: _handleSignIn,
                       text: 'Sign In',
                     ),
                     const SizedBox(height: 24.0),
@@ -151,13 +152,13 @@ class _SignInState extends State<SignIn> {
                         ),
                         InkWell(
                           onTap: () {
-                            // Navigator.push...
+                            // TODO: Add navigation to SignUp page
                           },
                           child: Text(
                             "Sign Up",
                             style: textTheme.labelSmall!.copyWith(
                               fontWeight: FontWeight.bold,
-                              color: colorScheme.primary, // Using primary color for a call to action
+                              color: colorScheme.primary,
                             ),
                           ),
                         ),
@@ -169,7 +170,7 @@ class _SignInState extends State<SignIn> {
             ),
             if (_isSpinKitLoaded)
               Container(
-                color: colorScheme.surface.withOpacity(0.7),
+                color: colorScheme.surface.withAlpha(200),
                 child: Center(
                   child: CircularProgressIndicator(color: colorScheme.primary),
                 ),
@@ -178,6 +179,53 @@ class _SignInState extends State<SignIn> {
         ),
       ),
     );
+  }
+
+  // New method to handle the sign-in process
+  Future<void> _handleSignIn() async {
+    if (_formKey.currentState?.validate() == true) {
+      setState(() {
+        _isSpinKitLoaded = true;
+      });
+
+      try {
+        await _authService.signInWithEmailAndPassword(
+          email: _emailController.text.trim(),
+          password: _passwordController.text.trim(),
+        );
+
+        if (mounted) {
+          SnackBarHelper.show(context, 'Signed in successfully!');
+          // TODO: Add navigation to the home page or a different screen after successful sign-in
+          Navigator.pop(context);
+        }
+      } on FirebaseAuthException catch (e) {
+        String message;
+        if (e.code == 'user-not-found') {
+          message = 'No user found for that email.';
+        } else if (e.code == 'wrong-password') {
+          message = 'Wrong password provided for that user.';
+        } else {
+          message = 'Invalid email or password. Please try again.';
+        }
+        if (mounted) {
+          SnackBarHelper.show(context, message, isError: true);
+        }
+      } catch (e) {
+        debugPrint('Error during sign in: $e');
+        if (mounted) {
+          SnackBarHelper.show(
+            context,
+            'An unexpected error occurred. Please try again.',
+            isError: true,
+          );
+        }
+      } finally {
+        setState(() {
+          _isSpinKitLoaded = false;
+        });
+      }
+    }
   }
 
   @override
