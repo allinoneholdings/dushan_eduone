@@ -7,14 +7,14 @@ class CustomStatusCard extends StatelessWidget {
   final String title;
   final String value;
 
-
-
   const CustomStatusCard({
     super.key,
-    this.onTap, required this.containerColor, required this.icon, required this.title, required this.value,
+    this.onTap,
+    required this.containerColor,
+    required this.icon,
+    required this.title,
+    required this.value,
   });
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -22,25 +22,23 @@ class CustomStatusCard extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(10.0),
         decoration: BoxDecoration(
           color: containerColor,
-          borderRadius: BorderRadius.circular(12.0),
+          borderRadius: BorderRadius.circular(8.0),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon, size: 32, color: Theme.of(context).colorScheme.onSurfaceVariant),
+            Icon(
+              icon,
+              size: 32,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
             const SizedBox(height: 8.0),
-            Text(
-              title,
-              style: textTheme.labelSmall,
-            ),
+            Text(title, style: textTheme.labelSmall),
             const SizedBox(height: 4.0),
-            Text(
-              value,
-              style: textTheme.headlineLarge,
-            ),
+            Text(value, style: textTheme.headlineLarge),
           ],
         ),
       ),

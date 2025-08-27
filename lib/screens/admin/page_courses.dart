@@ -14,7 +14,7 @@ class PageCourses extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'Manage Courses',
+          'Courses',
           style: textTheme.headlineLarge!.copyWith(fontWeight: FontWeight.bold),
         ),
         actions: [

@@ -1,6 +1,5 @@
-import 'package:flutter/cupertino.dart';
+import 'package:edu_one/screens/admin/user_details_page.dart';
 import 'package:flutter/material.dart';
-
 import '../../widgets/custom_text_form_field.dart';
 import 'add_edit_user_page.dart';
 
@@ -15,7 +14,7 @@ class PageUsers extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'Manage Users',
+          'Users',
           style: textTheme.headlineLarge!.copyWith(fontWeight: FontWeight.bold),
         ),
         actions: [
@@ -77,64 +76,76 @@ class PageUsers extends StatelessWidget {
         side: BorderSide(color: colorScheme.outlineVariant, width: 1.0),
       ),
       margin: const EdgeInsets.only(bottom: 16.0),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+      child: InkWell(
+        onTap: () {
+          // Navigate to the UserDetailsPage and pass the user data
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => UserDetailsPage(user: user),
+            ),
+          );
+        },
+        borderRadius: BorderRadius.circular(12.0),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      user['name']!,
+                      style: textTheme.bodyMedium!.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 4.0),
+                    Text(
+                      'Role: ${user['role']!}',
+                      style: textTheme.labelSmall!.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 4.0),
+                    Text(
+                      user['email']!,
+                      style: textTheme.labelSmall!.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Row(
                 children: [
-                  Text(
-                    user['name']!,
-                    style: textTheme.bodyMedium!.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: colorScheme.onSurface,
-                    ),
+                  IconButton(
+                    onPressed: () {
+                      // Navigate to the AddEditUserPage and pass the user data for editing
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => AddEditUserPage(user: user),
+                        ),
+                      );
+                    },
+                    icon: Icon(Icons.edit_outlined, color: colorScheme.primary),
                   ),
-                  const SizedBox(height: 4.0),
-                  Text(
-                    'Role: ${user['role']!}',
-                    style: textTheme.labelSmall!.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  const SizedBox(height: 4.0),
-                  Text(
-                    user['email']!,
-                    style: textTheme.labelSmall!.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
+                  IconButton(
+                    onPressed: () {
+                      // Delete functionality
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Deleting ${user['name']}')),
+                      );
+                    },
+                    icon: Icon(Icons.delete_outline, color: colorScheme.error),
                   ),
                 ],
               ),
-            ),
-            Row(
-              children: [
-                IconButton(
-                  onPressed: () {
-                    // Navigate to the AddEditUserPage and pass the user data for editing
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => AddEditUserPage(user: user),
-                      ),
-                    );
-                  },
-                  icon: Icon(Icons.edit_outlined, color: colorScheme.primary),
-                ),
-                IconButton(
-                  onPressed: () {
-                    // Delete functionality
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Deleting ${user['name']}')),
-                    );
-                  },
-                  icon: Icon(Icons.delete_outline, color: colorScheme.error),
-                ),
-              ],
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
