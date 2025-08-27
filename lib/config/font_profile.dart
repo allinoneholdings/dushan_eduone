@@ -13,38 +13,38 @@ class FontProfile {
   static const FontWeight bold = FontWeight.w700;
 
   // Text Styles with Google Fonts (Roboto)
-  static TextStyle smallText = GoogleFonts.ubuntu(
+  static TextStyle smallText = GoogleFonts.inter(
     fontSize: small,
     fontWeight: regular,
     letterSpacing: 0.5,
   );
 
-  static TextStyle mediumText = GoogleFonts.ubuntu(
+  static TextStyle mediumText = GoogleFonts.inter(
     fontSize: medium,
     fontWeight: regular,
     letterSpacing: 0.25,
   );
 
-  static TextStyle largeText = GoogleFonts.ubuntu(
+  static TextStyle largeText = GoogleFonts.inter(
     fontSize: large,
     fontWeight: bold,
     letterSpacing: 0.0,
   );
 
   // LMS-specific styles
-  static TextStyle courseTitle = GoogleFonts.ubuntu(
+  static TextStyle courseTitle = GoogleFonts.inter(
     fontSize: large,
     fontWeight: bold,
     letterSpacing: 0.0,
   );
 
-  static TextStyle buttonText = GoogleFonts.ubuntu(
+  static TextStyle buttonText = GoogleFonts.inter(
     fontSize: medium,
     fontWeight: bold,
     letterSpacing: 0.5,
   );
 
-  static TextStyle caption = GoogleFonts.ubuntu(
+  static TextStyle caption = GoogleFonts.inter(
     fontSize: small,
     fontWeight: light,
     letterSpacing: 0.5,

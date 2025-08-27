@@ -1,12 +1,8 @@
-import 'dart:async';
-
-import 'package:edu_one/signin.dart';
+import 'package:edu_one/utils/snackbar_helper.dart';
+import 'package:edu_one/widgets/custom_filled_button.dart';
 import 'package:edu_one/widgets/custom_text.dart';
 import 'package:edu_one/widgets/custom_text_form_field.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-
-import 'config/font_profile.dart';
 
 class SignUp extends StatefulWidget {
   const SignUp({super.key});
@@ -16,452 +12,243 @@ class SignUp extends StatefulWidget {
 }
 
 class _SignUpState extends State<SignUp> {
+  final _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _repeatPasswordController =
-      TextEditingController();
-  final TextEditingController _bioController = TextEditingController();
-  final TextEditingController _contactNumberController =
-      TextEditingController();
-
-  final List<String> roles = ['Student', 'Staff'];
-  String? _selectedRole;
-
+  final TextEditingController _confirmPasswordController = TextEditingController();
   bool _isSpinKitLoaded = false;
-  final _formKey = GlobalKey<FormState>();
+  String? _selectedRole;
 
   @override
   Widget build(BuildContext context) {
-    ColorScheme colorScheme = Theme.of(context).colorScheme;
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: colorScheme.surface,
-        title: Text("Sign Up"),
+        title: RichText(
+          text: TextSpan(
+            style: textTheme.headlineLarge, // Use the base style from your theme
+            children: <TextSpan>[
+              TextSpan(
+                text: 'Edu',
+                style: TextStyle(
+                  color: colorScheme.primary, // First color for 'Edu'
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              TextSpan(
+                text: 'One',
+                style: TextStyle(
+                  color: colorScheme.secondary, // Second color for 'One'
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ),
         centerTitle: true,
       ),
-      body: Stack(
-        children: [
-          SingleChildScrollView(
-            child: Container(
-              margin: const EdgeInsets.all(16.0),
-              padding: const EdgeInsets.all(8.0),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(8.0),
-                border: Border.all(
-                  color: colorScheme.primary.withAlpha(95),
-                  width: 2.0,
-                ),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.only(
-                  bottom: 8.0,
-                  left: 8.0,
-                  right: 8.0,
-                ),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          CustomText(text: 'Name'),
-                          CustomTextFormField(
-                            hint: 'SDN Perera',
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Name is required.';
-                              } else if (value.length < 8) {
-                                return 'Name must be at least 8 characters.';
-                              }
-                              return null;
-                            },
-                            textController: _nameController,
-                          ),
-                        ],
+      body: SafeArea(
+        child: Stack(
+          children: [
+            SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 48.0),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      'Create Your Account',
+                      style: textTheme.headlineLarge!.copyWith(
+                        color: colorScheme.onSurface,
+                        fontWeight: FontWeight.bold,
                       ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildText('Role', colorScheme),
-                          _buildDropdown(
-                            roles,
-                            'Select Role',
-                            _selectedRole,
-                            (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Role is required.';
-                              }
-                              return null;
-                            },
-                            colorScheme,
-                            onChanged: (value) {
-                              setState(() {
-                                _selectedRole = value;
-                              });
-                            },
-                          ),
-                        ],
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 8.0),
+                    Text(
+                      'Join our learning community today.',
+                      style: textTheme.bodyMedium!.copyWith(
+                        color: colorScheme.onSurfaceVariant,
                       ),
-
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          CustomText(text: 'Contact Number'),
-                          CustomTextFormField(
-                            hint: '0712345678',
-                            textController: _contactNumberController,
-                            keyboardType: TextInputType.number,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Contact Number is required.';
-                              } else if (value.length != 10) {
-                                return 'Contact Number must be 10 digits.';
-                              }
-                              return null;
-                            },
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 48.0),
+                    CustomText(text: 'Full Name'),
+                    const SizedBox(height: 8.0),
+                    CustomTextFormField(
+                      hint: 'John Doe',
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Full name is required.';
+                        }
+                        return null;
+                      },
+                      textController: _nameController,
+                    ),
+                    const SizedBox(height: 16.0),
+                    CustomText(text: 'Email Address'),
+                    const SizedBox(height: 8.0),
+                    CustomTextFormField(
+                      hint: 'eduonemail@email.com',
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Email is required.';
+                        }
+                        final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+$');
+                        if (!emailRegex.hasMatch(value)) {
+                          return 'Invalid email format.';
+                        }
+                        return null;
+                      },
+                      textController: _emailController,
+                      keyboardType: TextInputType.emailAddress,
+                    ),
+                    const SizedBox(height: 16.0),
+                    CustomText(text: 'Password'),
+                    const SizedBox(height: 8.0),
+                    CustomTextFormField(
+                      textController: _passwordController,
+                      hint: '********',
+                      obscureText: true,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Password is required.';
+                        }
+                        if (value.length < 8) {
+                          return 'Password must be at least 8 characters long.';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16.0),
+                    CustomText(text: 'Confirm Password'),
+                    const SizedBox(height: 8.0),
+                    CustomTextFormField(
+                      textController: _confirmPasswordController,
+                      hint: '********',
+                      obscureText: true,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please confirm your password.';
+                        }
+                        if (value != _passwordController.text) {
+                          return 'Passwords do not match.';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16.0),
+                    CustomText(text: 'Account Type'),
+                    const SizedBox(height: 8.0),
+                    _buildRoleDropdown(context), // New widget for role selection
+                    const SizedBox(height: 48.0),
+                    CustomFilledButton(
+                      onPressed: () {
+                        if (_formKey.currentState?.validate() == true && _selectedRole != null) {
+                          setState(() {
+                            _isSpinKitLoaded = true;
+                          });
+                          // Handle signup logic
+                          SnackBarHelper.show(
+                            context,
+                            'Account created as $_selectedRole!',
+                          );
+                        } else {
+                          SnackBarHelper.show(
+                            context,
+                            'Please select an account type.',
+                            isError: true,
+                          );
+                        }
+                      },
+                      text: 'Create Account',
+                    ),
+                    const SizedBox(height: 24.0),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          "Already have an account? ",
+                          style: textTheme.labelSmall!.copyWith(
+                            color: colorScheme.onSurface,
                           ),
-                        ],
-                      ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          CustomText(text: 'Email'),
-
-                          CustomTextFormField(
-                            hint: '',
-                            textController: _emailController,
-                            keyboardType: TextInputType.emailAddress,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Email is required.';
-                              }
-                              final emailRegex = RegExp(
-                                r'^[^@]+@[^@]+\.[^@]+$',
-                              );
-                              if (!emailRegex.hasMatch(value)) {
-                                return 'Invalid email format.';
-                              }
-                              return null;
-                            },
-                          ),
-                        ],
-                      ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          CustomText(text: 'Password'),
-                          CustomTextFormField(
-                            hint: '********',
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Password is required.';
-                              }
-                              final passwordRegex = RegExp(
-                                r'^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).{8,}$',
-                              );
-                              if (!passwordRegex.hasMatch(value)) {
-                                return 'Password must be at least 8 characters long, '
-                                    'contain an uppercase letter, a number, and a special character.';
-                              }
-                              return null;
-                            },
-                            textController: _passwordController,
-                            obscureText: true,
-                          ),
-                        ],
-                      ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          CustomText(text: 'Repeat password'),
-
-                          CustomTextFormField(
-                            hint: '********',
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Repeat Password is required.';
-                              } else if (value != _passwordController.text) {
-                                return 'Passwords do not match.';
-                              }
-                              return null;
-                            },
-                            textController: _repeatPasswordController,
-                            obscureText: true,
-                          ),
-
-                          Padding(
-                            padding: const EdgeInsets.only(left: 8.0),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  "*",
-                                  style: TextStyle(color: Colors.redAccent),
-                                ),
-                                Flexible(
-                                  child: Text(
-                                    style: TextStyle(
-                                      color:
-                                          Theme.of(
-                                            context,
-                                          ).colorScheme.onSurface,
-                                      fontSize: FontProfile.small,
-                                    ),
-                                    "Password must contain minimum 8 characters with numbers,a special character and one uppercase letter",
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _buildText('Bio', colorScheme),
-                              _buildBioField('Enter your bio', (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Bio is required.';
-                                }
-                                return null;
-                              }, colorScheme),
-                            ],
-                          ),
-                        ],
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(30.0),
-                        child: Column(
-                          children: [
-                            FilledButton(
-                              onPressed: () async {
-                                print('already in');
-                                if (_formKey.currentState!.validate()) {
-                                  setState(() {
-                                    _isSpinKitLoaded = true;
-                                  });
-                                } else {
-                                  _showSnackBar('Verification failed', true);
-                                }
-                              },
-                              style: FilledButton.styleFrom(
-                                minimumSize: const Size(150.0, 50.0),
-                                maximumSize: const Size(200.0, 50.0),
-                                backgroundColor: colorScheme.primary,
-                                foregroundColor: colorScheme.onPrimary,
-                                textStyle: const TextStyle(
-                                  fontSize: FontProfile.medium,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8.0),
-                                ),
-                                padding: const EdgeInsets.only(
-                                  left: 50.0,
-                                  right: 50.0,
-                                  top: 15.0,
-                                  bottom: 15.0,
-                                ),
-                              ),
-                              child: const Text("Sign up"),
-                            ),
-                          ],
                         ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(20.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              "Already have an account? ",
-                              style: TextStyle(
-                                color: colorScheme.onSurface,
-                                fontSize: FontProfile.small,
-                              ),
+                        InkWell(
+                          onTap: () => Navigator.pop(context), // Go back to the sign-in page
+                          child: Text(
+                            "Sign In",
+                            style: textTheme.labelSmall!.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: colorScheme.primary,
                             ),
-                            InkWell(
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const SignIn(),
-                                  ),
-                                );
-                              },
-                              child: Text(
-                                "Sign in",
-                                style: TextStyle(
-                                  color: colorScheme.onSurface,
-                                  fontSize: FontProfile.small,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                            ),
-                          ],
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
             ),
-          ),
-          _isSpinKitLoaded
-              ? Align(
-                alignment: Alignment.bottomCenter,
-                child: CircularProgressIndicator(),
-              )
-              : Container(),
-        ],
-      ),
-    );
-  }
-
-  // void navigate(User? user) {
-  //   if (user != null) {
-  //     Navigator.of(context).pop();
-  //   } else {
-  //     _showSnackBar('Something went wrong. Signup failed.', true);
-  //   }
-  // }
-
-  void _showSnackBar(String msg, bool isError) {
-    final _colorScheme = Theme.of(context).colorScheme;
-    final snackBar = SnackBar(
-      content: Text(msg, style: TextStyle(color: _colorScheme.onSecondary)),
-      duration: const Duration(seconds: 3),
-      backgroundColor: isError ? _colorScheme.secondary : _colorScheme.primary,
-    );
-    ScaffoldMessenger.of(context).showSnackBar(snackBar);
-  }
-
-  Widget _buildText(String text, ColorScheme colorScheme) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 20.0, bottom: 6.0),
-      child: Text(
-        text,
-        style: TextStyle(
-          color: colorScheme.onSurface,
-          fontSize: FontProfile.medium,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDropdown(
-    List<String> items,
-    String text,
-    selectedVariable,
-    FormFieldValidator validator,
-    ColorScheme colorScheme, {
-    required Function(dynamic) onChanged,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: DropdownButtonFormField<String>(
-        value: selectedVariable,
-        isExpanded: true,
-        decoration: InputDecoration(
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8.0),
-            borderSide: BorderSide(
-              color: colorScheme.outlineVariant,
-              width: 2.0,
-              style: BorderStyle.solid,
-            ),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8.0),
-            borderSide: BorderSide(
-              color: colorScheme.onSurfaceVariant,
-              width: 2.0,
-              style: BorderStyle.solid,
-            ),
-          ),
-          errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8.0),
-            borderSide: BorderSide(
-              color: colorScheme.outlineVariant,
-              width: 2.0,
-              style: BorderStyle.solid,
-            ),
-          ),
-          focusedErrorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8.0),
-            borderSide: BorderSide(
-              color: colorScheme.outlineVariant,
-              width: 2.0,
-              style: BorderStyle.solid,
-            ),
-          ),
-        ),
-        hint: Text(text),
-        items:
-            items.map((String item) {
-              return DropdownMenuItem(
-                value: item,
-                child: Text(
-                  item,
-                  style: TextStyle(color: colorScheme.onSurface),
+            if (_isSpinKitLoaded)
+              Container(
+                color: colorScheme.surface.withOpacity(0.7),
+                child: Center(
+                  child: CircularProgressIndicator(color: colorScheme.primary),
                 ),
-              );
-            }).toList(),
-        onChanged: onChanged,
-        validator: validator,
+              ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildBioField(
-    String text,
-    FormFieldValidator validator,
-    ColorScheme colorScheme,
-  ) {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: TextFormField(
-        minLines: 3,
-        maxLines: 5,
-        controller: _bioController,
-        style: TextStyle(color: colorScheme.onSurface),
-        decoration: InputDecoration(
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8.0),
-            borderSide: BorderSide(
-              color: colorScheme.outlineVariant,
-              width: 2.0,
-              style: BorderStyle.solid,
+  Widget _buildRoleDropdown(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainer,
+        borderRadius: BorderRadius.circular(8.0),
+        border: Border.all(color: colorScheme.outlineVariant, width: 2.0),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: _selectedRole,
+          hint: Text('Select Role', style: TextStyle(color: colorScheme.onSurfaceVariant)),
+          isExpanded: true,
+          style: TextStyle(color: colorScheme.onSurface),
+          dropdownColor: colorScheme.surfaceContainer,
+          items: const [
+            DropdownMenuItem(
+              value: 'Student',
+              child: Text('Student'),
             ),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8.0),
-            borderSide: BorderSide(
-              color: colorScheme.onSurfaceVariant,
-              width: 2.0,
-              style: BorderStyle.solid,
+            DropdownMenuItem(
+              value: 'Staff',
+              child: Text('Staff'),
             ),
-          ),
-          errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8.0),
-            borderSide: BorderSide(
-              color: colorScheme.outlineVariant,
-              width: 2.0,
-              style: BorderStyle.solid,
-            ),
-          ),
-          focusedErrorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8.0),
-            borderSide: BorderSide(
-              color: colorScheme.outlineVariant,
-              width: 2.0,
-              style: BorderStyle.solid,
-            ),
-          ),
-          hintText: text,
+          ],
+          onChanged: (String? newValue) {
+            setState(() {
+              _selectedRole = newValue;
+            });
+          },
         ),
-        validator: validator,
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
   }
 }

@@ -28,7 +28,7 @@ class ColorProfile {
       primary: Color(0xFF4A89D3),
       onPrimary: Color(0xFFFFFFFF),
       primaryContainer: Color(0xFF153444),
-      secondary: Color(0xFFF4B400),
+      secondary: Color(0xFFBF8A00),
       onSecondary: Color(0xFFFFFFFF),
       secondaryContainer: Color(0xFF5C4921),
       onSecondaryContainer: Color(0xFFDDDDDD),

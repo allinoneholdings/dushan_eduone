@@ -1,10 +1,9 @@
+import 'package:edu_one/utils/snackbar_helper.dart';
 import 'package:edu_one/widgets/custom_filled_button.dart';
 import 'package:edu_one/widgets/custom_text.dart';
 import 'package:edu_one/widgets/custom_text_form_field.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-import 'config/font_profile.dart';
 
 class SignIn extends StatefulWidget {
   const SignIn({super.key});
@@ -16,190 +15,169 @@ class SignIn extends StatefulWidget {
 class _SignInState extends State<SignIn> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  bool _isSpinKitLoaded = false;
   final _formKey = GlobalKey<FormState>();
+  bool _isSpinKitLoaded = false;
 
-  _SignInState();
   @override
   Widget build(BuildContext context) {
-    ColorScheme colorScheme = Theme.of(context).colorScheme;
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Welcome to EduOne'), centerTitle: true),
-      body: Stack(
-        children: [
-          SingleChildScrollView(
-            child: Container(
-              margin: EdgeInsets.all(20.0),
-              padding: EdgeInsets.all(5.0),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(8.0),
-                border: Border.all(
-                  color: Theme.of(context).colorScheme.primary.withAlpha(95),
-                  width: 2,
+      appBar: AppBar(
+        title: RichText(
+          text: TextSpan(
+            style: textTheme.headlineLarge, // Use the base style from your theme
+            children: <TextSpan>[
+              TextSpan(
+                text: 'Edu',
+                style: TextStyle(
+                  color: colorScheme.primary, // First color for 'Edu'
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      //_buildHeadline('Login'),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          CustomText(text: 'Email'),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 8.0),
-
-                            child: CustomTextFormField(
-                              hint: 'eduonemail@email.com',
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Email is required.';
-                                }
-                                final emailRegex = RegExp(
-                                  r'^[^@]+@[^@]+\.[^@]+$',
-                                );
-                                if (!emailRegex.hasMatch(value)) {
-                                  return 'Invalid email format.';
-                                }
-                                return null;
-                              },
-                              textController: _emailController,
-                            ),
-                          ),
-                        ],
+              TextSpan(
+                text: 'One',
+                style: TextStyle(
+                  color: colorScheme.secondary, // Second color for 'One'
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ),
+        centerTitle: true,
+      ),
+      body: SafeArea(
+        child: Stack(
+          children: [
+            SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 48.0),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      'Welcome Back!',
+                      style: textTheme.headlineLarge!.copyWith(
+                        color: colorScheme.onSurface,
+                        fontWeight: FontWeight.bold,
                       ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          CustomText(text: 'Password'),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 8.0),
-
-                            child: CustomTextFormField(
-                              textController: _passwordController,
-                              hint: '********',
-                              obscureText: true,
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Password is required.';
-                                }
-                                if (value.length < 8) {
-                                  return 'Password must be at least 8 characters long.';
-                                }
-                                return null;
-                              },
-                            ),
-                          ),
-                        ],
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 8.0),
+                    Text(
+                      'Sign in to continue your learning journey.',
+                      style: textTheme.bodyMedium!.copyWith(
+                        color: colorScheme.onSurfaceVariant,
                       ),
-                      Padding(
-                        padding: const EdgeInsets.only(top: 50.0, bottom: 70.0),
-                        child: CustomFilledButton(
-                          onPressed: () {
-                            if (_formKey.currentState?.validate() == true) {
-                              setState(() {
-                                _isSpinKitLoaded = true;
-                              });
-                            }
-                          },
-                          text: 'Sign in',
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 48.0),
+                    CustomText(text: 'Email Address'),
+                    const SizedBox(height: 8.0),
+                    CustomTextFormField(
+                      hint: 'eduonemail@email.com',
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Email is required.';
+                        }
+                        final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+$');
+                        if (!emailRegex.hasMatch(value)) {
+                          return 'Invalid email format.';
+                        }
+                        return null;
+                      },
+                      textController: _emailController,
+                      keyboardType: TextInputType.emailAddress,
+                    ),
+                    const SizedBox(height: 16.0),
+                    CustomText(text: 'Password'),
+                    const SizedBox(height: 8.0),
+                    CustomTextFormField(
+                      textController: _passwordController,
+                      hint: '********',
+                      obscureText: true,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Password is required.';
+                        }
+                        if (value.length < 8) {
+                          return 'Password must be at least 8 characters long.';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 12.0),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: InkWell(
+                        onTap: () =>  SnackBarHelper.show(
+                          context,
+                          'Coming soon, Please contact the administrator',
+                          isError: true,
+                        ),
+                        child: Text(
+                          "Forgot password?",
+                          style: textTheme.labelSmall!.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: colorScheme.onSurface,
+                          ),
                         ),
                       ),
-                      Padding(
-                        padding: const EdgeInsets.all(5.0),
-                        child: InkWell(
+                    ),
+                    const SizedBox(height: 48.0),
+                    CustomFilledButton(
+                      onPressed: () {
+                        if (_formKey.currentState?.validate() == true) {
+                          setState(() {
+                            _isSpinKitLoaded = true;
+                          });
+                        }
+                      },
+                      text: 'Sign In',
+                    ),
+                    const SizedBox(height: 24.0),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          "Don’t have an account? ",
+                          style: textTheme.labelSmall!.copyWith(
+                            color: colorScheme.onSurface,
+                          ),
+                        ),
+                        InkWell(
                           onTap: () {
-                            _showSnackBar(
-                              'Coming soon, Please contact the administrator',
-                              true,
-                            );
+                            // Navigator.push...
                           },
                           child: Text(
-                            "Forgot password?",
-                            style: TextStyle(
-                              color: Theme.of(context).colorScheme.onSurface,
-                              fontSize: FontProfile.small,
-                              fontWeight: FontWeight.normal,
+                            "Sign Up",
+                            style: textTheme.labelSmall!.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: colorScheme.primary, // Using primary color for a call to action
                             ),
                           ),
                         ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(20.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              "Don’t have an account? ",
-                              style: TextStyle(
-                                color: Theme.of(context).colorScheme.onSurface,
-                                fontSize: FontProfile.small,
-                              ),
-                            ),
-                            InkWell(
-                              onTap: () {
-                                // Navigator.push(
-                                //     context,
-                                //     MaterialPageRoute(
-                                //         builder: (context) => const Signup()));
-                              },
-                              child: Text(
-                                "Sign Up",
-                                style: TextStyle(
-                                  color:
-                                      Theme.of(context).colorScheme.onSurface,
-                                  fontSize: FontProfile.small,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
             ),
-          ),
-          _isSpinKitLoaded
-              ? Align(
-                alignment: Alignment.bottomCenter,
-                child: Container(
-                  margin: const EdgeInsets.only(top: 100.0),
+            if (_isSpinKitLoaded)
+              Container(
+                color: colorScheme.surface.withOpacity(0.7),
+                child: Center(
                   child: CircularProgressIndicator(color: colorScheme.primary),
                 ),
-              )
-              : Container(),
-        ],
+              ),
+          ],
+        ),
       ),
     );
-  }
-
-  // void navigate(User? user) {
-  //   if (user != null) {
-  //     Navigator.pushAndRemoveUntil(
-  //       context,
-  //       MaterialPageRoute(builder: (context) => IndexPage()),
-  //           (Route<dynamic> route) => false, // Remove all routes
-  //     );
-  //   } else {
-  //     _showSnackBar('Login failed. Email or password is wrong.', true);
-  //   }
-  // }
-
-  void _showSnackBar(String msg, bool isError) {
-    final _colorScheme = Theme.of(context).colorScheme;
-    final snackBar = SnackBar(
-      content: Text(msg, style: TextStyle(color: _colorScheme.onSecondary)),
-      duration: const Duration(seconds: 3),
-      backgroundColor: isError ? _colorScheme.secondary : _colorScheme.primary,
-    );
-    ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 
   @override
