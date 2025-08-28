@@ -85,17 +85,15 @@ class PageAdminDashboard extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 16.0),
-        // StreamBuilder for Active Courses
+
+        // StreamBuilder for Total Courses
         Expanded(
           child: StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection('courses')
-                .where('isActive', isEqualTo: true)
-                .snapshots(),
+            stream: FirebaseFirestore.instance.collection('courses').snapshots(),
             builder: (context, snapshot) {
               final int count = snapshot.data?.docs.length ?? 0;
               return CustomStatusCard(
-                title: 'Active Courses',
+                title: 'Total Courses',
                 value: count.toString(),
                 icon: Icons.school,
                 containerColor: colorScheme.secondaryContainer,
@@ -104,12 +102,14 @@ class PageAdminDashboard extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 16.0),
+
         // StreamBuilder for New Signups (in the last 24 hours)
         Expanded(
           child: StreamBuilder<QuerySnapshot>(
             stream: FirebaseFirestore.instance
                 .collection('users')
-                .where('createdAt', isGreaterThan: DateTime.now().subtract(const Duration(days: 1)))
+                .where('createdAt',
+                isGreaterThan: DateTime.now().subtract(const Duration(days: 1)))
                 .snapshots(),
             builder: (context, snapshot) {
               final int count = snapshot.data?.docs.length ?? 0;

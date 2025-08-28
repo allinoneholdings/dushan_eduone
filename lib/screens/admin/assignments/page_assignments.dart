@@ -1,7 +1,11 @@
+import 'package:edu_one/screens/admin/assignments/assignment_details_page.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../../widgets/custom_text_form_field.dart';
 import 'add_edit_assignment_page.dart';
+import '../../../services/firestore_service.dart';
+import '../../../models/assignment_model.dart'; // Ensure you have this model
 
 // Convert to a StatefulWidget to manage the Firebase stream
 class PageAssignments extends StatefulWidget {
@@ -14,6 +18,10 @@ class PageAssignments extends StatefulWidget {
 class _PageAssignmentsState extends State<PageAssignments> {
   // Controller for the search text field
   final TextEditingController _searchController = TextEditingController();
+
+  // Firestore and Auth services
+  final FirestoreService _firestoreService = FirestoreService();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
   // Reference to the Firestore collection
   final CollectionReference _assignmentsCollection =
@@ -30,17 +38,30 @@ class _PageAssignmentsState extends State<PageAssignments> {
           'Assignments',
           style: textTheme.headlineLarge!.copyWith(fontWeight: FontWeight.bold),
         ),
+        // Use a StreamBuilder to conditionally show the Add button
         actions: [
-          IconButton(
-            icon: Icon(Icons.add, color: colorScheme.onSurface),
-            onPressed: () {
-              // Navigate to the AddEditAssignmentPage to add a new assignment
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const AddEditAssignmentPage(),
-                ),
-              );
+          StreamBuilder<bool>(
+            stream: _firestoreService.isUserAdmin(_auth.currentUser?.uid),
+            builder: (context, snapshot) {
+              // Check if the user is an admin
+              if (snapshot.connectionState == ConnectionState.active &&
+                  snapshot.hasData &&
+                  snapshot.data == true) {
+                // Show the button if the user is an admin
+                return IconButton(
+                  icon: Icon(Icons.add, color: colorScheme.onSurface),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AddEditAssignmentPage(),
+                      ),
+                    );
+                  },
+                );
+              }
+              // Hide the button for non-admins or while loading
+              return const SizedBox.shrink();
             },
           ),
           const SizedBox(width: 16.0),
@@ -87,12 +108,7 @@ class _PageAssignmentsState extends State<PageAssignments> {
                       itemBuilder: (context, index) {
                         // Extract data from the document snapshot
                         DocumentSnapshot doc = snapshot.data!.docs[index];
-                        Map<String, dynamic> assignment =
-                        doc.data() as Map<String, dynamic>;
-
-                        // Pass the document ID to handle updates/deletes
-                        assignment['id'] = doc.id;
-
+                        final assignment = AssignmentModel.fromDocument(doc);
                         return _buildAssignmentCard(context, assignment);
                       },
                     );
@@ -109,7 +125,7 @@ class _PageAssignmentsState extends State<PageAssignments> {
   // A separate function to build the assignment card
   Widget _buildAssignmentCard(
       BuildContext context,
-      Map<String, dynamic> assignment,
+      AssignmentModel assignment,
       ) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
@@ -123,9 +139,11 @@ class _PageAssignmentsState extends State<PageAssignments> {
       margin: const EdgeInsets.only(bottom: 16.0),
       child: InkWell(
         onTap: () {
-          // Navigate to a details page or show a dialog
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Tapped on ${assignment['title']}')),
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => AssignmentDetailsPage(assignment: assignment),
+            ),
           );
         },
         borderRadius: BorderRadius.circular(12.0),
@@ -138,7 +156,7 @@ class _PageAssignmentsState extends State<PageAssignments> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      assignment['title']!,
+                      assignment.title,
                       style: textTheme.bodyMedium!.copyWith(
                         fontWeight: FontWeight.bold,
                         color: colorScheme.onSurface,
@@ -146,14 +164,14 @@ class _PageAssignmentsState extends State<PageAssignments> {
                     ),
                     const SizedBox(height: 4.0),
                     Text(
-                      'Course: ${assignment['course'] ?? 'N/A'}',
+                      'Course: ${assignment.courseId ?? 'N/A'}',
                       style: textTheme.labelSmall!.copyWith(
                         color: colorScheme.onSurfaceVariant,
                       ),
                     ),
                     const SizedBox(height: 4.0),
                     Text(
-                      'Due Date: ${assignment['dueDate'] ?? 'N/A'}',
+                      'Due Date: ${assignment.dueDate ?? 'N/A'}',
                       style: textTheme.labelSmall!.copyWith(
                         color: colorScheme.onSurfaceVariant,
                       ),
@@ -161,31 +179,44 @@ class _PageAssignmentsState extends State<PageAssignments> {
                   ],
                 ),
               ),
-              Row(
-                children: [
-                  IconButton(
-                    onPressed: () {
-                      // Navigate to the AddEditAssignmentPage to edit the assignment
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => AddEditAssignmentPage(
-                            assignment: assignment,
-                            docId: assignment['id'],
-                          ),
+              // Use a StreamBuilder to conditionally show the edit/delete buttons
+              StreamBuilder<bool>(
+                stream: _firestoreService.isUserAdmin(_auth.currentUser?.uid),
+                builder: (context, snapshot) {
+                  // Check if the user is an admin
+                  if (snapshot.connectionState == ConnectionState.active &&
+                      snapshot.hasData &&
+                      snapshot.data == true) {
+                    // Show buttons for admins
+                    return Row(
+                      children: [
+                        IconButton(
+                          onPressed: () {
+                            // Navigate to the edit page, passing the assignment model
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => AddEditAssignmentPage(
+                                  docId: assignment.id,
+                                ),
+                              ),
+                            );
+                          },
+                          icon: Icon(Icons.edit_outlined, color: colorScheme.primary),
                         ),
-                      );
-                    },
-                    icon: Icon(Icons.edit_outlined, color: colorScheme.primary),
-                  ),
-                  IconButton(
-                    onPressed: () {
-                      // Call a function to delete the assignment from Firebase
-                      _deleteAssignment(assignment['id']);
-                    },
-                    icon: Icon(Icons.delete_outline, color: colorScheme.error),
-                  ),
-                ],
+                        IconButton(
+                          onPressed: () {
+                            // Call the new confirmation dialog
+                            _confirmDelete(assignment.id!);
+                          },
+                          icon: Icon(Icons.delete_outline, color: colorScheme.error),
+                        ),
+                      ],
+                    );
+                  }
+                  // Hide buttons for non-admins or while loading
+                  return const SizedBox.shrink();
+                },
               ),
             ],
           ),
@@ -194,17 +225,53 @@ class _PageAssignmentsState extends State<PageAssignments> {
     );
   }
 
+  // --- New Function to Show Confirmation Dialog ---
+  void _confirmDelete(String docId) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Confirm Deletion'),
+          content: const Text(
+              'Are you sure you want to delete this assignment? This action cannot be undone.'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop(); // Dismiss the dialog
+              },
+            ),
+            TextButton(
+              child: Text(
+                'Delete',
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+              onPressed: () {
+                _deleteAssignment(docId); // Call the delete function
+                Navigator.of(context).pop(); // Dismiss the dialog
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   // Function to delete an assignment from Firestore
   Future<void> _deleteAssignment(String docId) async {
     try {
       await _assignmentsCollection.doc(docId).delete();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Assignment deleted successfully.')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Assignment deleted successfully.')),
+        );
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to delete assignment: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to delete assignment: $e')),
+        );
+      }
     }
   }
 }

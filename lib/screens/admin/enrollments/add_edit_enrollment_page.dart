@@ -121,7 +121,7 @@ class _AddEditEnrollmentPageState extends State<AddEditEnrollmentPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'Add Student to Course',
+          'Add Student',
           style: textTheme.headlineMedium!.copyWith(
             fontWeight: FontWeight.bold,
           ),
@@ -142,10 +142,10 @@ class _AddEditEnrollmentPageState extends State<AddEditEnrollmentPage> {
               ),
               const SizedBox(height: 24.0),
 
-              // StreamBuilder to fetch all users from Firestore
+              // StreamBuilder to fetch only students from Firestore
               Expanded(
                 child: StreamBuilder<QuerySnapshot>(
-                  stream: FirebaseFirestore.instance.collection('users').snapshots(),
+                  stream: FirebaseFirestore.instance.collection('users').where('role', isEqualTo: 'Student').snapshots(),
                   builder: (context, userSnapshot) {
                     if (userSnapshot.hasError) {
                       return Center(child: Text('Error: ${userSnapshot.error}'));
@@ -156,7 +156,7 @@ class _AddEditEnrollmentPageState extends State<AddEditEnrollmentPage> {
                     }
 
                     if (!userSnapshot.hasData || userSnapshot.data!.docs.isEmpty) {
-                      return const Center(child: Text('No users found.'));
+                      return const Center(child: Text('No students found.'));
                     }
 
                     final users = userSnapshot.data!.docs.map((doc) => UserModel.fromDocument(doc)).toList();
