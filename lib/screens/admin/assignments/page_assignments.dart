@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../widgets/custom_text_form_field.dart';
+import '../../../widgets/custom_popup_box.dart'; // Import your reusable widget
 import 'add_edit_assignment_page.dart';
 import '../../../services/firestore_service.dart';
 import '../../../models/assignment_model.dart'; // Ensure you have this model
@@ -24,8 +25,8 @@ class _PageAssignmentsState extends State<PageAssignments> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   // Reference to the Firestore collection
-  final CollectionReference _assignmentsCollection =
-  FirebaseFirestore.instance.collection('assignments');
+  final CollectionReference _assignmentsCollection = FirebaseFirestore.instance
+      .collection('assignments');
 
   @override
   Widget build(BuildContext context) {
@@ -124,9 +125,9 @@ class _PageAssignmentsState extends State<PageAssignments> {
 
   // A separate function to build the assignment card
   Widget _buildAssignmentCard(
-      BuildContext context,
-      AssignmentModel assignment,
-      ) {
+    BuildContext context,
+    AssignmentModel assignment,
+  ) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
@@ -142,7 +143,8 @@ class _PageAssignmentsState extends State<PageAssignments> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => AssignmentDetailsPage(assignment: assignment),
+              builder:
+                  (context) => AssignmentDetailsPage(assignment: assignment),
             ),
           );
         },
@@ -192,24 +194,89 @@ class _PageAssignmentsState extends State<PageAssignments> {
                       children: [
                         IconButton(
                           onPressed: () {
-                            // Navigate to the edit page, passing the assignment model
+                            // Corrected: Pass the full assignment model to the edit page
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => AddEditAssignmentPage(
-                                  docId: assignment.id,
-                                ),
+                                builder:
+                                    (context) => AddEditAssignmentPage(
+                                      assignment: assignment.toMap(),
+                                      docId: assignment.id,
+                                    ),
                               ),
                             );
                           },
-                          icon: Icon(Icons.edit_outlined, color: colorScheme.primary),
+                          icon: Icon(
+                            Icons.edit_outlined,
+                            color: colorScheme.primary,
+                          ),
                         ),
                         IconButton(
-                          onPressed: () {
-                            // Call the new confirmation dialog
-                            _confirmDelete(assignment.id!);
+                          onPressed: () async {
+                            final bool confirmDelete =
+                                await showDialog(
+                                  context: context,
+                                  builder:
+                                      (context) => CustomPopupBox(
+                                        title: 'Confirm Deletion',
+                                        content: Text(
+                                          'Are you sure you want to delete "${assignment.title}"? This action cannot be undone.',
+                                        ),
+                                        actions: [
+                                          TextButton(
+                                            onPressed:
+                                                () => Navigator.of(
+                                                  context,
+                                                ).pop(false),
+                                            child: const Text('Cancel'),
+                                          ),
+                                          FilledButton(
+                                            onPressed:
+                                                () => Navigator.of(
+                                                  context,
+                                                ).pop(true),
+                                            style: FilledButton.styleFrom(
+                                              backgroundColor:
+                                                  colorScheme.error,
+                                            ),
+                                            child: const Text('Delete'),
+                                          ),
+                                        ],
+                                      ),
+                                ) ??
+                                false;
+
+                            if (confirmDelete) {
+                              try {
+                                await _assignmentsCollection
+                                    .doc(assignment.id)
+                                    .delete();
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'Assignment deleted successfully.',
+                                      ),
+                                    ),
+                                  );
+                                }
+                              } catch (e) {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'Failed to delete assignment: $e',
+                                      ),
+                                    ),
+                                  );
+                                }
+                              }
+                            }
                           },
-                          icon: Icon(Icons.delete_outline, color: colorScheme.error),
+                          icon: Icon(
+                            Icons.delete_outline,
+                            color: colorScheme.error,
+                          ),
                         ),
                       ],
                     );
@@ -223,55 +290,5 @@ class _PageAssignmentsState extends State<PageAssignments> {
         ),
       ),
     );
-  }
-
-  // --- New Function to Show Confirmation Dialog ---
-  void _confirmDelete(String docId) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Confirm Deletion'),
-          content: const Text(
-              'Are you sure you want to delete this assignment? This action cannot be undone.'),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('Cancel'),
-              onPressed: () {
-                Navigator.of(context).pop(); // Dismiss the dialog
-              },
-            ),
-            TextButton(
-              child: Text(
-                'Delete',
-                style: TextStyle(color: Theme.of(context).colorScheme.error),
-              ),
-              onPressed: () {
-                _deleteAssignment(docId); // Call the delete function
-                Navigator.of(context).pop(); // Dismiss the dialog
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  // Function to delete an assignment from Firestore
-  Future<void> _deleteAssignment(String docId) async {
-    try {
-      await _assignmentsCollection.doc(docId).delete();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Assignment deleted successfully.')),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to delete assignment: $e')),
-        );
-      }
-    }
   }
 }

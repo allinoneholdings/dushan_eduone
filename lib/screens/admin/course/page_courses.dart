@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../../models/course_model.dart';
 import '../../../services/firestore_service.dart';
 import '../../../widgets/custom_text_form_field.dart';
+import '../../../widgets/custom_popup_box.dart'; // Import your reusable widget
 import 'add_edit_course_page.dart';
 import 'course_details_page.dart';
 import '../../../models/user_model.dart'; // Import UserModel
@@ -180,12 +181,36 @@ class PageCourses extends StatelessWidget {
                   ),
                   IconButton(
                     onPressed: () async {
-                      // Delete functionality
-                      await FirestoreService().deleteCourse(course.id);
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Deleted ${course.name}')),
-                        );
+                      // Use the CustomPopupBox for confirmation
+                      final bool confirmDelete = await showDialog(
+                        context: context,
+                        builder: (context) => CustomPopupBox(
+                          title: 'Confirm Deletion',
+                          content: Text(
+                              'Are you sure you want to delete "${course.name}"? This action cannot be undone.'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(false),
+                              child: const Text('Cancel'),
+                            ),
+                            FilledButton(
+                              onPressed: () => Navigator.of(context).pop(true),
+                              style: FilledButton.styleFrom(
+                                backgroundColor: colorScheme.error,
+                              ),
+                              child: const Text('Delete'),
+                            ),
+                          ],
+                        ),
+                      ) ?? false; // Default to false if the dialog is dismissed
+
+                      if (confirmDelete) {
+                        await FirestoreService().deleteCourse(course.id);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Deleted ${course.name}')),
+                          );
+                        }
                       }
                     },
                     icon: Icon(Icons.delete_outline, color: colorScheme.error),
