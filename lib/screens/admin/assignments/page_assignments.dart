@@ -1,10 +1,23 @@
 import 'package:flutter/material.dart';
-
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../widgets/custom_text_form_field.dart';
 import 'add_edit_assignment_page.dart';
 
-class PageAssignments extends StatelessWidget {
-  PageAssignments({super.key});
+// Convert to a StatefulWidget to manage the Firebase stream
+class PageAssignments extends StatefulWidget {
+  const PageAssignments({super.key});
+
+  @override
+  State<PageAssignments> createState() => _PageAssignmentsState();
+}
+
+class _PageAssignmentsState extends State<PageAssignments> {
+  // Controller for the search text field
+  final TextEditingController _searchController = TextEditingController();
+
+  // Reference to the Firestore collection
+  final CollectionReference _assignmentsCollection =
+  FirebaseFirestore.instance.collection('assignments');
 
   @override
   Widget build(BuildContext context) {
@@ -41,20 +54,48 @@ class PageAssignments extends StatelessWidget {
             children: [
               // Search Field
               CustomTextFormField(
-                textController: TextEditingController(),
+                textController: _searchController,
                 hint: 'Search assignments by title or course',
                 validator: (value) => null, // No validation needed for search
                 keyboardType: TextInputType.text,
               ),
               const SizedBox(height: 24.0),
 
-              // Assignment List (using a mock list for demonstration)
+              // Use StreamBuilder to listen for real-time updates from Firebase
               Expanded(
-                child: ListView.builder(
-                  itemCount: _mockAssignments.length,
-                  itemBuilder: (context, index) {
-                    final assignment = _mockAssignments[index];
-                    return _buildAssignmentCard(context, assignment);
+                child: StreamBuilder<QuerySnapshot>(
+                  stream: _assignmentsCollection.snapshots(),
+                  builder: (context, snapshot) {
+                    // Check for errors
+                    if (snapshot.hasError) {
+                      return Center(child: Text('Error: ${snapshot.error}'));
+                    }
+
+                    // Show loading indicator while fetching data
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+
+                    // Check if data exists
+                    if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                      return const Center(child: Text('No assignments found.'));
+                    }
+
+                    // Build the list of assignments from the snapshot data
+                    return ListView.builder(
+                      itemCount: snapshot.data!.docs.length,
+                      itemBuilder: (context, index) {
+                        // Extract data from the document snapshot
+                        DocumentSnapshot doc = snapshot.data!.docs[index];
+                        Map<String, dynamic> assignment =
+                        doc.data() as Map<String, dynamic>;
+
+                        // Pass the document ID to handle updates/deletes
+                        assignment['id'] = doc.id;
+
+                        return _buildAssignmentCard(context, assignment);
+                      },
+                    );
                   },
                 ),
               ),
@@ -65,10 +106,11 @@ class PageAssignments extends StatelessWidget {
     );
   }
 
+  // A separate function to build the assignment card
   Widget _buildAssignmentCard(
-    BuildContext context,
-    Map<String, dynamic> assignment,
-  ) {
+      BuildContext context,
+      Map<String, dynamic> assignment,
+      ) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
@@ -104,14 +146,14 @@ class PageAssignments extends StatelessWidget {
                     ),
                     const SizedBox(height: 4.0),
                     Text(
-                      'Course: ${assignment['course']!}',
+                      'Course: ${assignment['course'] ?? 'N/A'}',
                       style: textTheme.labelSmall!.copyWith(
                         color: colorScheme.onSurfaceVariant,
                       ),
                     ),
                     const SizedBox(height: 4.0),
                     Text(
-                      'Due Date: ${assignment['dueDate']!}',
+                      'Due Date: ${assignment['dueDate'] ?? 'N/A'}',
                       style: textTheme.labelSmall!.copyWith(
                         color: colorScheme.onSurfaceVariant,
                       ),
@@ -127,9 +169,10 @@ class PageAssignments extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder:
-                              (context) =>
-                                  AddEditAssignmentPage(assignment: assignment),
+                          builder: (context) => AddEditAssignmentPage(
+                            assignment: assignment,
+                            docId: assignment['id'],
+                          ),
                         ),
                       );
                     },
@@ -137,12 +180,8 @@ class PageAssignments extends StatelessWidget {
                   ),
                   IconButton(
                     onPressed: () {
-                      // Delete functionality
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Deleting ${assignment['title']}'),
-                        ),
-                      );
+                      // Call a function to delete the assignment from Firebase
+                      _deleteAssignment(assignment['id']);
                     },
                     icon: Icon(Icons.delete_outline, color: colorScheme.error),
                   ),
@@ -155,22 +194,17 @@ class PageAssignments extends StatelessWidget {
     );
   }
 
-  // Mock data for demonstration purposes
-  final List<Map<String, dynamic>> _mockAssignments = [
-    {
-      'title': 'Module 1 Quiz',
-      'course': 'Introduction to Flutter',
-      'dueDate': '2025-09-01',
-    },
-    {
-      'title': 'Homework 2',
-      'course': 'Dart Programming Basics',
-      'dueDate': '2025-09-05',
-    },
-    {
-      'title': 'Final Project Proposal',
-      'course': 'Advanced UI/UX Design',
-      'dueDate': '2025-09-10',
-    },
-  ];
+  // Function to delete an assignment from Firestore
+  Future<void> _deleteAssignment(String docId) async {
+    try {
+      await _assignmentsCollection.doc(docId).delete();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Assignment deleted successfully.')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to delete assignment: $e')),
+      );
+    }
+  }
 }

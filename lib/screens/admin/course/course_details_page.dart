@@ -1,7 +1,7 @@
 import 'package:edu_one/models/course_model.dart';
 import 'package:flutter/material.dart';
 import '../assignments/manage_assignments_page.dart';
-import '../manage_enrollments_page.dart';
+import '../enrollments/manage_enrollments_page.dart';
 
 class CourseDetailsPage extends StatelessWidget {
   final CourseModel course;

@@ -1,10 +1,10 @@
 import 'package:edu_one/screens/admin/admin_navigation.dart';
 import 'package:edu_one/config/font_profile.dart';
 import 'package:edu_one/signin.dart';
-import 'package:edu_one/signup.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // Import Firebase Auth
 
 import 'config/color_profile.dart';
 
@@ -20,18 +20,12 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     SystemChrome.setSystemUIOverlayStyle(
-      SystemUiOverlayStyle(
+      const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         systemNavigationBarColor: Colors.transparent,
       ),
     );
     return MaterialApp(
-      initialRoute: '/admin', // Set your starting page here
-      routes: {
-        '/signin': (context) => const SignIn(),
-        '/signup': (context) => const SignUp(),
-        '/admin': (context) => const AdminNavigation(),
-      },
       title: 'edu one',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
@@ -53,8 +47,33 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorProfile.dark,
       ),
       themeMode: ThemeMode.system,
+      home: const AuthGate(),
+    );
+  }
+}
 
-      // home: const PageAdminDashboard(),
+class AuthGate extends StatelessWidget {
+  const AuthGate({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        if (snapshot.hasData) {
+          // User is signed in, show the AdminNavigation page
+          return const AdminNavigation();
+        } else {
+          // User is not signed in, show the SignIn page
+          return const SignIn();
+        }
+      },
     );
   }
 }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../../widgets/custom_text_form_field.dart';
+import '../../../widgets/custom_popup_box.dart';
 import 'add_edit_user_page.dart';
 import 'user_details_page.dart';
 import '../../../services/firestore_service.dart';
@@ -63,9 +65,7 @@ class PageUsers extends StatelessWidget {
 
                     // Show an error message if something went wrong
                     if (snapshot.hasError) {
-                      return Center(
-                        child: Text('Error: ${snapshot.error}'),
-                      );
+                      return Center(child: Text('Error: ${snapshot.error}'));
                     }
 
                     // If there's no data, show a message
@@ -95,6 +95,7 @@ class PageUsers extends StatelessWidget {
   Widget _buildUserCard(BuildContext context, UserModel user) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final currentUserId = FirebaseAuth.instance.currentUser?.uid;
 
     return Card(
       elevation: 0,
@@ -146,33 +147,133 @@ class PageUsers extends StatelessWidget {
                   ],
                 ),
               ),
-              Row(
-                children: [
-                  IconButton(
-                    onPressed: () {
-                      // Navigate to the AddEditUserPage and pass the user data for editing
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => AddEditUserPage(user: user.toMap()),
+              // Use a StreamBuilder to get the current user's data and role
+              StreamBuilder<DocumentSnapshot>(
+                stream: FirebaseAuth.instance.authStateChanges().asyncMap((
+                  user,
+                ) {
+                  if (user == null) {
+                    return Future.value(null);
+                  }
+                  return FirebaseFirestore.instance
+                      .collection('users')
+                      .doc(user.uid)
+                      .snapshots()
+                      .first;
+                }),
+                builder: (context, snapshot) {
+                  // Hide the buttons if the current user data is not available
+                  if (!snapshot.hasData || snapshot.data?.data() == null) {
+                    return const SizedBox.shrink();
+                  }
+
+                  final currentUserData =
+                      snapshot.data!.data() as Map<String, dynamic>;
+                  final currentUserRole =
+                      currentUserData['role'] as String? ?? '';
+                  final isCurrentUserAdmin = currentUserRole == 'Admin';
+
+                  final isTargetUserAdmin = user.role == 'Admin';
+                  final isCurrentUser = user.id == currentUserId;
+
+                  // The condition to determine if the edit/delete buttons should be visible:
+                  // 1. The currently logged-in user must be an admin.
+                  // 2. The target user cannot be an admin.
+                  // 3. The target user cannot be the currently logged-in user.
+                  final bool canEdit =
+                      isCurrentUserAdmin &&
+                      !isTargetUserAdmin &&
+                      !isCurrentUser;
+
+                  return Row(
+                    children: [
+                      // Conditionally show the edit button
+                      if (canEdit)
+                        IconButton(
+                          onPressed: () {
+                            // Navigate to the AddEditUserPage and pass the user data for editing
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder:
+                                    (context) =>
+                                        AddEditUserPage(user: user.toMap()),
+                              ),
+                            );
+                          },
+                          icon: Icon(
+                            Icons.edit_outlined,
+                            color: colorScheme.primary,
+                          ),
                         ),
-                      );
-                    },
-                    icon: Icon(Icons.edit_outlined, color: colorScheme.primary),
-                  ),
-                  IconButton(
-                    onPressed: () async {
-                      // Delete functionality
-                      await FirestoreService().deleteUser(user.id);
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Deleted ${user.name}')),
-                        );
-                      }
-                    },
-                    icon: Icon(Icons.delete_outline, color: colorScheme.error),
-                  ),
-                ],
+                      // Conditionally show the remove button
+                      if (canEdit)
+                        IconButton(
+                          onPressed: () {
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return CustomPopupBox(
+                                  title: 'Confirm Removal',
+                                  content: Text(
+                                    'Are you sure you want to remove ${user.name}? This action cannot be undone.',
+                                  ),
+                                  actions: <Widget>[
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.of(
+                                          context,
+                                        ).pop(); // Close the dialog
+                                      },
+                                      style: TextButton.styleFrom(
+                                        foregroundColor: colorScheme.onSurface,
+                                      ),
+                                      child: const Text('Cancel'),
+                                    ),
+                                    ElevatedButton(
+                                      onPressed: () async {
+                                        await FirestoreService().deleteUser(
+                                          user.id,
+                                        );
+                                        if (context.mounted) {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                'Removed ${user.name}',
+                                              ),
+                                            ),
+                                          );
+                                        }
+                                        Navigator.of(
+                                          context,
+                                        ).pop(); // Close the dialog
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            8.0,
+                                          ),
+                                        ),
+                                        backgroundColor: colorScheme.error,
+                                        foregroundColor: colorScheme.onError,
+                                      ),
+                                      child: const Text('Remove'),
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+                          },
+                          icon: Icon(
+                            Icons.person_remove_outlined,
+                            color: colorScheme.error,
+                          ),
+                        ),
+                    ],
+                  );
+                },
               ),
             ],
           ),

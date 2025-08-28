@@ -1,3 +1,4 @@
+import 'package:edu_one/signin.dart';
 import 'package:edu_one/utils/snackbar_helper.dart';
 import 'package:edu_one/widgets/custom_filled_button.dart';
 import 'package:edu_one/widgets/custom_text.dart';
@@ -52,7 +53,12 @@ class _SignUpState extends State<SignUp> {
 
         if (mounted) {
           SnackBarHelper.show(context, 'Account created as $_selectedRole!');
-          Navigator.pop(context); // Go back to the sign-in page on success
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const SignIn()),
+            (Route<dynamic> route) => false, // Remove all previous routes
+          );
+          // Navigator.pop(context);
         }
       } on FirebaseAuthException catch (e) {
         String message;
@@ -231,7 +237,7 @@ class _SignUpState extends State<SignUp> {
                       children: [
                         Text(
                           "Already have an account? ",
-                          style: textTheme.labelSmall!.copyWith(
+                          style: textTheme.labelLarge!.copyWith(
                             color: colorScheme.onSurface,
                           ),
                         ),
@@ -242,7 +248,7 @@ class _SignUpState extends State<SignUp> {
                               ), // Go back to the sign-in page
                           child: Text(
                             "Sign In",
-                            style: textTheme.labelSmall!.copyWith(
+                            style: textTheme.labelLarge!.copyWith(
                               fontWeight: FontWeight.bold,
                               color: colorScheme.primary,
                             ),

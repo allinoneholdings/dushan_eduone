@@ -1,3 +1,7 @@
+import 'package:edu_one/screens/admin/admin_navigation.dart';
+import 'package:edu_one/screens/admin/assignments/page_assignments.dart';
+import 'package:edu_one/screens/admin/page_admin_dashboard.dart';
+import 'package:edu_one/signup.dart';
 import 'package:edu_one/utils/snackbar_helper.dart';
 import 'package:edu_one/widgets/custom_filled_button.dart';
 import 'package:edu_one/widgets/custom_text.dart';
@@ -146,17 +150,22 @@ class _SignInState extends State<SignIn> {
                       children: [
                         Text(
                           "Don’t have an account? ",
-                          style: textTheme.labelSmall!.copyWith(
+                          style: textTheme.labelLarge!.copyWith(
                             color: colorScheme.onSurface,
                           ),
                         ),
                         InkWell(
                           onTap: () {
-                            // TODO: Add navigation to SignUp page
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const SignUp(),
+                              ),
+                            );
                           },
                           child: Text(
                             "Sign Up",
-                            style: textTheme.labelSmall!.copyWith(
+                            style: textTheme.labelLarge!.copyWith(
                               fontWeight: FontWeight.bold,
                               color: colorScheme.primary,
                             ),
@@ -196,8 +205,11 @@ class _SignInState extends State<SignIn> {
 
         if (mounted) {
           SnackBarHelper.show(context, 'Signed in successfully!');
-          // TODO: Add navigation to the home page or a different screen after successful sign-in
-          Navigator.pop(context);
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => AdminNavigation()),
+                (Route<dynamic> route) => false, // Remove all previous routes
+          );
         }
       } on FirebaseAuthException catch (e) {
         String message;
