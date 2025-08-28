@@ -1,6 +1,4 @@
 import 'package:edu_one/screens/admin/admin_navigation.dart';
-import 'package:edu_one/screens/admin/assignments/page_assignments.dart';
-import 'package:edu_one/screens/admin/page_admin_dashboard.dart';
 import 'package:edu_one/signup.dart';
 import 'package:edu_one/utils/snackbar_helper.dart';
 import 'package:edu_one/widgets/custom_filled_button.dart';
@@ -208,7 +206,7 @@ class _SignInState extends State<SignIn> {
           Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(builder: (context) => AdminNavigation()),
-                (Route<dynamic> route) => false, // Remove all previous routes
+            (Route<dynamic> route) => false, // Remove all previous routes
           );
         }
       } on FirebaseAuthException catch (e) {
