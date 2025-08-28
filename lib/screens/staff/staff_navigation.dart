@@ -6,22 +6,22 @@ import 'package:flutter/material.dart';
 
 import '../../widgets/admin_bottom_nav_bar.dart';
 
-class AdminNavigation extends StatefulWidget {
-  const AdminNavigation({super.key});
+class StaffNavigation extends StatefulWidget {
+  const StaffNavigation({super.key});
 
   @override
-  State<AdminNavigation> createState() => _AdminNavigationState();
+  State<StaffNavigation> createState() => _StaffNavigationState();
 }
 
-class _AdminNavigationState extends State<AdminNavigation> {
+class _StaffNavigationState extends State<StaffNavigation> {
   int _currentIndex = 0;
 
- //pages for bottom navigation bar
+  //pages for bottom navigation bar
   final List<Widget> _pages = [
     const PageAdminDashboard(),
     PageUsers(),
     PageCourses(),
-    PageAssignments()
+    PageAssignments(),
   ];
 
   void _onItemTapped(int index) {

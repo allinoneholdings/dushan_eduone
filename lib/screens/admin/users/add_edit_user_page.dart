@@ -1,9 +1,11 @@
 import 'package:edu_one/utils/snackbar_helper.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../../widgets/custom_text_form_field.dart';
 import '../../../services/firestore_service.dart';
 import '../../../models/user_model.dart';
 import 'package:edu_one/widgets/custom_filled_button.dart';
+import '../../../services/auth_service.dart';
 
 class AddEditUserPage extends StatefulWidget {
   // This nullable user parameter determines if we are adding or editing
@@ -23,6 +25,7 @@ class _AddEditUserPageState extends State<AddEditUserPage> {
   String _selectedRole = 'Student';
   late final bool _isEditing;
   final FirestoreService _firestoreService = FirestoreService();
+  final AuthService _authService = AuthService(); // Instantiate your AuthService
 
   @override
   void initState() {
@@ -51,31 +54,50 @@ class _AddEditUserPageState extends State<AddEditUserPage> {
   void _submitForm() async {
     if (_formKey.currentState!.validate()) {
       final isEditing = widget.user != null;
-      final String userId = isEditing ? widget.user!['id']! : '';
-
-      final userModel = UserModel(
-        id: userId,
-        name: _nameController.text,
-        email: _emailController.text,
-        role: _selectedRole,
-      );
 
       try {
         if (isEditing) {
+          // Update the user's profile information in Firestore
+          final userId = widget.user!['id']!;
+          final userModel = UserModel(
+            id: userId,
+            name: _nameController.text,
+            email: _emailController.text,
+            role: _selectedRole,
+          );
           await _firestoreService.updateUser(userModel);
-
-          SnackBarHelper.show(context, 'User updated successfully!');
-        } else {
-          // This example adds a new user to Firestore.
-          // Note: In a real-world app, user creation would likely be handled by Firebase Authentication
-          // and a Cloud Function to create the Firestore document.
-          await _firestoreService.addUser(userModel);
           if (context.mounted) {
-            SnackBarHelper.show(context, 'New user added successfully!');
+            SnackBarHelper.show(context, 'User updated successfully!');
+          }
+        } else {
+          // Use the AuthService to sign up a new user with email and password
+          final userCredential = await _authService.signUpWithEmailAndPassword(
+            email: _emailController.text.trim(),
+            password: _passwordController.text.trim(),
+            name: _nameController.text.trim(),
+            role: _selectedRole,
+          );
+
+          if (userCredential != null) {
+            if (context.mounted) {
+              SnackBarHelper.show(context, 'New user added successfully!');
+            }
           }
         }
         if (context.mounted) {
           Navigator.pop(context);
+        }
+      } on FirebaseAuthException catch (e) {
+        String message;
+        if (e.code == 'weak-password') {
+          message = 'The password provided is too weak.';
+        } else if (e.code == 'email-already-in-use') {
+          message = 'An account already exists for that email.';
+        } else {
+          message = 'Authentication failed: ${e.message}';
+        }
+        if (context.mounted) {
+          SnackBarHelper.show(context, message);
         }
       } catch (e) {
         if (context.mounted) {
@@ -135,6 +157,7 @@ class _AddEditUserPageState extends State<AddEditUserPage> {
                     return null;
                   },
                   keyboardType: TextInputType.emailAddress,
+                  enabled: !_isEditing, // Prevent editing email for existing users
                 ),
                 const SizedBox(height: 24.0),
 
@@ -148,16 +171,15 @@ class _AddEditUserPageState extends State<AddEditUserPage> {
                       borderSide: BorderSide(color: colorScheme.outlineVariant),
                     ),
                   ),
-                  items:
-                      <String>[
-                        'Student',
-                        'Staff',
-                      ].map<DropdownMenuItem<String>>((String value) {
-                        return DropdownMenuItem<String>(
-                          value: value,
-                          child: Text(value),
-                        );
-                      }).toList(),
+                  items: <String>[
+                    'Student',
+                    'Staff',
+                  ].map<DropdownMenuItem<String>>((String value) {
+                    return DropdownMenuItem<String>(
+                      value: value,
+                      child: Text(value),
+                    );
+                  }).toList(),
                   onChanged: (String? newValue) {
                     setState(() {
                       _selectedRole = newValue!;
@@ -174,6 +196,9 @@ class _AddEditUserPageState extends State<AddEditUserPage> {
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Please enter a password';
+                      }
+                      if (value.length < 6) {
+                        return 'Password must be at least 6 characters long';
                       }
                       return null;
                     },

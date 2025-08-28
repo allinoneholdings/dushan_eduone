@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/cupertino.dart';
 import '../models/user_model.dart';
 import '../models/course_model.dart';
 import '../models/assignment_model.dart';
@@ -12,17 +13,33 @@ class FirestoreService {
   // --- User CRUD Operations ---
 
   Future<void> addUser(UserModel user) {
-    return _firestore.collection('users').add(user.toMap());
+    return _firestore.collection('users').doc(user.id).set(user.toMap());
   }
 
+  // Get a stream of all users
   Stream<List<UserModel>> getUsers() {
     return _firestore
         .collection('users')
         .snapshots()
         .map(
           (snapshot) =>
-          snapshot.docs.map((doc) => UserModel.fromDocument(doc)).toList(),
-    );
+              snapshot.docs.map((doc) => UserModel.fromDocument(doc)).toList(),
+        );
+  }
+
+  // Get a stream for a single user's profile
+  Stream<UserModel?> getUser(String? userId) {
+    if (userId == null) {
+      return Stream.value(null);
+    }
+    return _firestore.collection('users').doc(userId).snapshots().map((
+      snapshot,
+    ) {
+      if (!snapshot.exists) {
+        return null;
+      }
+      return UserModel.fromDocument(snapshot);
+    });
   }
 
   Future<void> updateUser(UserModel user) {
@@ -31,6 +48,30 @@ class FirestoreService {
 
   Future<void> deleteUser(String userId) {
     return _firestore.collection('users').doc(userId).delete();
+  }
+
+  Stream<bool> isUserAdmin(String? userId) {
+    if (userId == null) {
+      return Stream.value(false);
+    }
+
+    return _firestore.collection('users').doc(userId).snapshots().map((
+      snapshot,
+    ) {
+      final userRole = snapshot.data()?['role'] as String?;
+      return userRole == 'Admin';
+    });
+  }
+
+  Stream<List<UserModel>> getStaffUsers() {
+    return _firestore
+        .collection('users')
+        .where('role', isEqualTo: 'Staff')
+        .snapshots()
+        .map(
+          (snapshot) =>
+              snapshot.docs.map((doc) => UserModel.fromDocument(doc)).toList(),
+        );
   }
 
   // --- Course CRUD Operations ---
@@ -45,10 +86,10 @@ class FirestoreService {
         .snapshots()
         .map(
           (snapshot) =>
-          snapshot.docs
-              .map((doc) => CourseModel.fromDocument(doc))
-              .toList(),
-    );
+              snapshot.docs
+                  .map((doc) => CourseModel.fromDocument(doc))
+                  .toList(),
+        );
   }
 
   Future<void> updateCourse(CourseModel course) {
@@ -60,6 +101,84 @@ class FirestoreService {
 
   Future<void> deleteCourse(String courseId) {
     return _firestore.collection('courses').doc(courseId).delete();
+  }
+
+  Stream<List<CourseModel>> getEnrolledCourses(String userId) {
+    // Listen for real-time changes to the 'enrollments' collection
+    return _firestore
+        .collection('enrollments')
+        .where('studentId', isEqualTo: userId)
+        .snapshots()
+        .asyncMap((enrollmentSnapshot) async {
+          // If there are no enrollment documents, return an empty list
+          if (enrollmentSnapshot.docs.isEmpty) {
+            return [];
+          }
+
+          // Extract all course IDs from the enrollment documents
+          final List<String> enrolledCourseIds =
+              enrollmentSnapshot.docs
+                  .map((doc) => doc.data()['courseId'] as String)
+                  .toList();
+
+          // Firestore's 'whereIn' query has a limit of 10 items.
+          // We need to chunk the list to handle more than 10 courses.
+          final List<CourseModel> enrolledCourses = [];
+          final int chunkSize = 10;
+
+          // Loop through the list of course IDs in chunks of 10
+          for (int i = 0; i < enrolledCourseIds.length; i += chunkSize) {
+            final chunk = enrolledCourseIds.sublist(
+              i,
+              i + chunkSize > enrolledCourseIds.length
+                  ? enrolledCourseIds.length
+                  : i + chunkSize,
+            );
+
+            // Query the 'courses' collection for the current chunk of IDs
+            final querySnapshot =
+                await _firestore
+                    .collection('courses')
+                    .where(FieldPath.documentId, whereIn: chunk)
+                    .get();
+
+            // Add the fetched courses to the main list
+            enrolledCourses.addAll(
+              querySnapshot.docs.map((doc) => CourseModel.fromDocument(doc)),
+            );
+          }
+
+          return enrolledCourses;
+        });
+  }
+
+  // Add a student to a course's enrolled list
+  Future<void> enrollInCourse(String courseId, String userId) async {
+    final courseRef = _firestore.collection('courses').doc(courseId);
+    final userRef = _firestore.collection('users').doc(userId);
+
+    await _firestore.runTransaction((transaction) async {
+      final courseSnapshot = await transaction.get(courseRef);
+      final userSnapshot = await transaction.get(userRef);
+
+      if (courseSnapshot.exists && userSnapshot.exists) {
+        // Add user to the course's enrolled students list
+        List<dynamic> enrolledStudents =
+            courseSnapshot.data()!['enrolledStudents'] ?? [];
+        if (!enrolledStudents.contains(userId)) {
+          enrolledStudents.add(userId);
+          transaction.update(courseRef, {'enrolledStudents': enrolledStudents});
+        }
+
+        // Add course to the user's enrolled courses list
+        List<dynamic> enrolledCourses =
+            userSnapshot.data()!['enrolledCourses'] ?? [];
+        if (!enrolledCourses.contains(courseId)) {
+          enrolledCourses.add(courseId);
+          transaction.update(userRef, {'enrolledCourses': enrolledCourses});
+        }
+      }
+    });
   }
 
   // --- Assignment CRUD Operations ---
@@ -74,10 +193,10 @@ class FirestoreService {
         .snapshots()
         .map(
           (snapshot) =>
-          snapshot.docs
-              .map((doc) => AssignmentModel.fromDocument(doc))
-              .toList(),
-    );
+              snapshot.docs
+                  .map((doc) => AssignmentModel.fromDocument(doc))
+                  .toList(),
+        );
   }
 
   Future<void> updateAssignment(AssignmentModel assignment) {
@@ -103,10 +222,10 @@ class FirestoreService {
         .snapshots()
         .map(
           (snapshot) =>
-          snapshot.docs
-              .map((doc) => EnrollmentModel.fromDocument(doc))
-              .toList(),
-    );
+              snapshot.docs
+                  .map((doc) => EnrollmentModel.fromDocument(doc))
+                  .toList(),
+        );
   }
 
   Future<void> updateEnrollment(EnrollmentModel enrollment) {
@@ -132,10 +251,10 @@ class FirestoreService {
         .snapshots()
         .map(
           (snapshot) =>
-          snapshot.docs
-              .map((doc) => SubmissionModel.fromDocument(doc))
-              .toList(),
-    );
+              snapshot.docs
+                  .map((doc) => SubmissionModel.fromDocument(doc))
+                  .toList(),
+        );
   }
 
   Future<void> updateSubmission(SubmissionModel submission) {
@@ -149,67 +268,88 @@ class FirestoreService {
     return _firestore.collection('submissions').doc(submissionId).delete();
   }
 
-  Stream<bool> isUserAdmin(String? userId) {
-    // If the userId is null, the user cannot be an admin.
-    if (userId == null) {
-      return Stream.value(false);
-    }
-
-    // Listen to the user's document for real-time updates
-    return FirebaseFirestore.instance
-        .collection('users')
-        .doc(userId)
-        .snapshots()
-        .map((snapshot) {
-      // Safely check if the 'role' field exists and is equal to 'Admin'
-      final userRole = snapshot.data()?['role'] as String?;
-      return userRole == 'Admin';
-    });
-  }
-
-  Stream<List<UserModel>> getStaffUsers() {
-    return _firestore.collection('users').where('role', isEqualTo: 'Staff').snapshots().map(
-          (snapshot) => snapshot.docs
-          .map((doc) => UserModel.fromDocument(doc)) // Corrected this line
-          .toList(),
-    );
-  }
-  // Fetch a single user by their ID
-  Future<UserModel?> getUser(String? userId) async {
-    if (userId == null) {
+  /// Retrieves a single instructor's name as a Future<String?>.
+  Future<String?> getInstructorName(String? instructorId) async {
+    if (instructorId == null) {
       return null;
     }
     try {
-      final DocumentSnapshot doc = await _firestore.collection('users').doc(userId).get();
+      final doc = await _firestore.collection('users').doc(instructorId).get();
       if (doc.exists) {
-        return UserModel.fromDocument(doc);
+        return doc.data()?['name'] as String?;
       }
       return null;
     } catch (e) {
-      print('Error getting user: $e');
+      debugPrint('Error getting instructor name: $e');
       return null;
     }
   }
 
-
-  // This is the implementation for the isUserAdmin method
-  // getIsAdmin will be called within the isUserAdmin stream
-  Future<bool> getIsAdmin(String? userId) async {
+  Stream<int> getEnrolledCoursesCount(String? userId) {
+    // Return a stream with a value of 0 if the userId is null to avoid errors.
     if (userId == null) {
-      return false;
+      return Stream.value(0);
     }
-    try {
-      final userDoc = await _firestore.collection('users').doc(userId).get();
-      if (userDoc.exists) {
-        final data = userDoc.data();
-        if (data != null && data.containsKey('isAdmin')) {
-          return data['isAdmin'] as bool;
-        }
-      }
-      return false;
-    } catch (e) {
-      print('Error checking admin status: $e');
-      return false;
+
+    // Query the 'enrollments' collection where 'userId' matches the current user's ID.
+    return _firestore
+        .collection('enrollments')
+        .where('studentId', isEqualTo: userId)
+        .snapshots() // Get a stream of query snapshots.
+        .map(
+          (snapshot) => snapshot.docs.length,
+        ); // Map the snapshot to its document count.
+  }
+
+  // Get the number of total assignments for a student's enrolled courses
+  Stream<int> getTotalAssignmentsCount(String? userId) {
+    if (userId == null) {
+      return Stream.value(0);
     }
+    return _firestore
+        .collection('enrollments')
+        .where('userId', isEqualTo: userId)
+        .snapshots()
+        .asyncMap((enrollmentSnapshot) async {
+          if (enrollmentSnapshot.docs.isEmpty) {
+            return 0;
+          }
+          final List<String> courseIds =
+              enrollmentSnapshot.docs
+                  .map((doc) => doc['courseId'] as String)
+                  .toList();
+
+          final assignmentSnapshot =
+              await _firestore
+                  .collection('assignments')
+                  .where('courseId', whereIn: courseIds)
+                  .get();
+          return assignmentSnapshot.docs.length;
+        });
+  }
+
+  // Get the number of submitted assignments by the student
+  Stream<int> getCompletedAssignmentsCount(String? userId) {
+    if (userId == null) {
+      return Stream.value(0);
+    }
+    return _firestore
+        .collection('submissions')
+        .where('userId', isEqualTo: userId)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.length);
+  }
+
+  Stream<List<CourseModel>> getTop5Courses() {
+    return _firestore
+        .collection('courses')
+        .limit(5)
+        .snapshots()
+        .map(
+          (snapshot) =>
+              snapshot.docs
+                  .map((doc) => CourseModel.fromDocument(doc))
+                  .toList(),
+        );
   }
 }

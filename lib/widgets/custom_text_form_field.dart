@@ -6,6 +6,7 @@ class CustomTextFormField extends StatelessWidget {
   final bool obscureText;
   final FormFieldValidator validator;
   final TextInputType keyboardType;
+  final bool enabled;
 
   const CustomTextFormField({
     super.key,
@@ -14,11 +15,14 @@ class CustomTextFormField extends StatelessWidget {
     required this.hint,
     required this.validator,
     required this.textController,
+    this.enabled = true,
+
   });
 
   @override
   Widget build(BuildContext context) {
     return TextFormField(
+      enabled: enabled,
       controller: textController,
       style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
       decoration: InputDecoration(
