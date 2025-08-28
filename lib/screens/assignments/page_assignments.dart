@@ -1,4 +1,3 @@
-import 'package:edu_one/screens/admin/assignments/assignment_details_page.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -6,7 +5,8 @@ import '../../../widgets/custom_text_form_field.dart';
 import '../../../widgets/custom_popup_box.dart'; // Import your reusable widget
 import 'add_edit_assignment_page.dart';
 import '../../../services/firestore_service.dart';
-import '../../../models/assignment_model.dart'; // Ensure you have this model
+import '../../../models/assignment_model.dart';
+import 'assignment_details_page.dart'; // Ensure you have this model
 
 // Convert to a StatefulWidget to manage the Firebase stream
 class PageAssignments extends StatefulWidget {

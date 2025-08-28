@@ -53,11 +53,7 @@ class CustomStatusCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(
-              icon,
-              size: 32,
-              color: colorScheme.onBackground,
-            ),
+            Icon(icon, size: 32, color: colorScheme.onBackground),
             const SizedBox(height: 12.0),
             Text(
               value,
@@ -79,7 +75,6 @@ class CustomStatusCard extends StatelessWidget {
     );
   }
 }
-
 
 /// The main dashboard page for a student.
 class PageStudentDashboard extends StatelessWidget {
@@ -131,7 +126,9 @@ class PageStudentDashboard extends StatelessWidget {
         // Completed Assignments
         Expanded(
           child: StreamBuilder<int>(
-            stream: firestoreService.getCompletedAssignmentsCount(currentUserId),
+            stream: firestoreService.getCompletedAssignmentsCount(
+              currentUserId,
+            ),
             builder: (context, snapshot) {
               final int count = snapshot.data ?? 0;
               return CustomStatusCard(
@@ -191,12 +188,17 @@ class PageStudentDashboard extends StatelessWidget {
                   elevation: 0,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12.0),
-                    side: BorderSide(color: colorScheme.outlineVariant, width: 1.0),
+                    side: BorderSide(
+                      color: colorScheme.outlineVariant,
+                      width: 1.0,
+                    ),
                   ),
                   margin: const EdgeInsets.only(bottom: 12.0),
                   child: ListTile(
                     contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16.0, vertical: 8.0),
+                      horizontal: 16.0,
+                      vertical: 8.0,
+                    ),
                     leading: CircleAvatar(
                       backgroundColor: colorScheme.primary,
                       child: Text(
@@ -285,7 +287,8 @@ class PageStudentDashboard extends StatelessWidget {
                 stream: FirebaseAuth.instance.authStateChanges(),
                 builder: (context, snapshot) {
                   String userName = 'Student';
-                  if (snapshot.data != null && snapshot.data!.displayName != null) {
+                  if (snapshot.data != null &&
+                      snapshot.data!.displayName != null) {
                     final fullName = snapshot.data!.displayName!;
                     if (fullName.contains(' ')) {
                       userName = fullName.split(' ')[0];

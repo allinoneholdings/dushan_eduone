@@ -1,12 +1,8 @@
-import 'package:edu_one/screens/admin/page_admin_dashboard.dart';
-import 'package:edu_one/screens/admin/assignments/page_assignments.dart';
-import 'package:edu_one/screens/admin/course/page_courses.dart';
-import 'package:edu_one/screens/admin/users/page_users.dart';
 import 'package:edu_one/screens/student/page_student_dashboard.dart';
 import 'package:edu_one/widgets/student_bottom_nav_bar.dart';
 import 'package:flutter/material.dart';
-
-import '../../widgets/admin_bottom_nav_bar.dart';
+import '../assignments/page_assignments.dart';
+import '../course/page_courses.dart';
 
 class StudentNavigation extends StatefulWidget {
   const StudentNavigation({super.key});
@@ -22,7 +18,7 @@ class _StudentNavigationState extends State<StudentNavigation> {
   final List<Widget> _pages = [
     const PageStudentDashboard(),
     PageCourses(),
-    PageAssignments()
+    PageAssignments(),
   ];
 
   void _onItemTapped(int index) {
