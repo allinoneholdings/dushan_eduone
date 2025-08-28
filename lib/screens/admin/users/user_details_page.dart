@@ -1,7 +1,8 @@
+import 'package:edu_one/models/user_model.dart';
 import 'package:flutter/material.dart';
 
 class UserDetailsPage extends StatelessWidget {
-  final Map<String, dynamic> user;
+  final UserModel user;
 
   const UserDetailsPage({super.key, required this.user});
 
@@ -27,7 +28,7 @@ class UserDetailsPage extends StatelessWidget {
             children: [
               // User Name
               Text(
-                user['name']!,
+                user.name,
                 style: textTheme.headlineLarge!.copyWith(
                   fontWeight: FontWeight.bold,
                   color: colorScheme.onSurface,
@@ -40,7 +41,7 @@ class UserDetailsPage extends StatelessWidget {
                 context,
                 icon: Icons.email_outlined,
                 label: 'Email Address',
-                value: user['email']!,
+                value: user.email,
               ),
               const SizedBox(height: 16.0),
 
@@ -49,7 +50,7 @@ class UserDetailsPage extends StatelessWidget {
                 context,
                 icon: Icons.badge_outlined,
                 label: 'Role',
-                value: user['role']!,
+                value: user.role,
               ),
               const SizedBox(height: 16.0),
 
@@ -61,7 +62,8 @@ class UserDetailsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildDetailRow(BuildContext context, {
+  Widget _buildDetailRow(
+    BuildContext context, {
     required IconData icon,
     required String label,
     required String value,

@@ -38,7 +38,7 @@ class ColorProfile {
       surfaceContainer: Color(0xFF2C2C2C),
       surfaceContainerHigh: Color(0xFF252525),
       error: Color(0xFFD30024),
-      onError: Color(0xFFA25353),
+      onError: Color(0xFFFFFFFF),
       outline: Color(0xFF7E6423),
       outlineVariant: Color(0xFF5A5A5A));
 }

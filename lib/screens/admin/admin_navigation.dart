@@ -1,7 +1,7 @@
 import 'package:edu_one/screens/admin/page_admin_dashboard.dart';
-import 'package:edu_one/screens/admin/page_assignments.dart';
-import 'package:edu_one/screens/admin/page_courses.dart';
-import 'package:edu_one/screens/admin/page_users.dart';
+import 'package:edu_one/screens/admin/assignments/page_assignments.dart';
+import 'package:edu_one/screens/admin/course/page_courses.dart';
+import 'package:edu_one/screens/admin/users/page_users.dart';
 import 'package:flutter/material.dart';
 
 import '../../widgets/bottom_nav_bar.dart';

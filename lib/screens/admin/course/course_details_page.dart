@@ -1,11 +1,53 @@
+import 'package:edu_one/models/course_model.dart';
 import 'package:flutter/material.dart';
-import 'manage_assignments_page.dart';
-import 'manage_enrollments_page.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // Import Firestore
+import '../assignments/manage_assignments_page.dart';
+import '../enrollments/manage_enrollments_page.dart';
+import 'package:edu_one/models/user_model.dart'; // Import UserModel
 
-class CourseDetailsPage extends StatelessWidget {
-  final Map<String, dynamic> course;
+class CourseDetailsPage extends StatefulWidget {
+  final CourseModel course;
 
   const CourseDetailsPage({super.key, required this.course});
+
+  @override
+  State<CourseDetailsPage> createState() => _CourseDetailsPageState();
+}
+
+class _CourseDetailsPageState extends State<CourseDetailsPage> {
+  // A future to hold the instructor's name, which will be fetched from Firestore
+  late Future<String> _instructorNameFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize the future when the widget is created
+    _instructorNameFuture = _fetchInstructorName();
+  }
+
+  /// Fetches the instructor's name from Firestore using their ID.
+  Future<String> _fetchInstructorName() async {
+    try {
+      // Get the document snapshot for the instructor using their ID
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.course.instructor)
+          .get();
+
+      // Check if the document exists and has a name
+      if (userDoc.exists && userDoc.data() != null) {
+        // Create a UserModel from the document and return the name
+        final user = UserModel.fromDocument(userDoc);
+        return user.name;
+      } else {
+        return 'Unknown Instructor';
+      }
+    } catch (e) {
+      // Handle any errors during the fetch
+      print('Error fetching instructor name: $e');
+      return 'Error fetching name';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,18 +71,50 @@ class CourseDetailsPage extends StatelessWidget {
             children: [
               // Course Information Section
               Text(
-                course['title']!,
+                widget.course.name,
                 style: textTheme.headlineLarge!.copyWith(
                   fontWeight: FontWeight.bold,
                   color: colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: 8.0),
-              Text(
-                'This course is taught by ${course['staff']} and covers topics in ${course['title']}.',
-                style: textTheme.labelSmall!.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
+
+              // Use a FutureBuilder to display the instructor's name
+              FutureBuilder<String>(
+                future: _instructorNameFuture,
+                builder: (context, snapshot) {
+                  String instructorName = '';
+                  // Check the state of the future
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    instructorName = 'Loading...';
+                  } else if (snapshot.hasError) {
+                    instructorName = 'Error';
+                  } else if (snapshot.hasData) {
+                    instructorName = snapshot.data!;
+                  } else {
+                    instructorName = 'Unknown Instructor';
+                  }
+
+                  // Use RichText to highlight the instructor's name
+                  return RichText(
+                    text: TextSpan(
+                      style: textTheme.labelSmall!.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                      children: [
+                        const TextSpan(text: 'This course is taught by '),
+                        TextSpan(
+                          text: instructorName,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: colorScheme.primary, // or any color you prefer
+                          ),
+                        ),
+                        TextSpan(text: ' and covers topics in ${widget.course.name}.'),
+                      ],
+                    ),
+                  );
+                },
               ),
               const SizedBox(height: 32.0),
 
@@ -49,7 +123,7 @@ class CourseDetailsPage extends StatelessWidget {
                 context: context,
                 title: 'Manage Enrollments',
                 description:
-                    'View and manage students enrolled in this course.',
+                'View and manage students enrolled in this course.',
                 icon: Icons.people_alt_outlined,
                 onTap: () {
                   // Navigate to the Manage Enrollments Page and pass the course data
@@ -57,7 +131,7 @@ class CourseDetailsPage extends StatelessWidget {
                     context,
                     MaterialPageRoute(
                       builder:
-                          (context) => ManageEnrollmentsPage(course: course),
+                          (context) => ManageEnrollmentsPage(course: widget.course),
                     ),
                   );
                 },
@@ -74,7 +148,7 @@ class CourseDetailsPage extends StatelessWidget {
                     context,
                     MaterialPageRoute(
                       builder:
-                          (context) => ManageAssignmentsPage(course: course),
+                          (context) => ManageAssignmentsPage(course: widget.course),
                     ),
                   );
                 },
