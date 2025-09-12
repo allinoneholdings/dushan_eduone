@@ -110,7 +110,7 @@ class PageUsers extends StatelessWidget {
         case 'Staff':
           return colorScheme.secondary;
         case 'Student':
-          return Colors.green;
+          return Colors.greenAccent;
         default:
           return colorScheme.outlineVariant;
       }

@@ -1,3 +1,4 @@
+import 'package:edu_one/providers/login_provider.dart';
 import 'package:edu_one/screens/admin/admin_navigation.dart';
 import 'package:edu_one/screens/staff/staff_navigation.dart'; // New import for staff navigation
 import 'package:edu_one/screens/student/student_navigation.dart';
@@ -8,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:provider/provider.dart';
 
 import 'config/color_profile.dart';
 
@@ -28,29 +30,38 @@ class MyApp extends StatelessWidget {
         systemNavigationBarColor: Colors.transparent,
       ),
     );
-    return MaterialApp(
-      title: 'edu one',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        textTheme: TextTheme(
-          headlineLarge: FontProfile.largeText,
-          bodyMedium: FontProfile.mediumText,
-          labelSmall: FontProfile.caption,
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (context) {
+            return LoginProvider();
+          },
         ),
-        useMaterial3: true,
-        colorScheme: ColorProfile.light,
-      ),
-      darkTheme: ThemeData(
-        textTheme: TextTheme(
-          headlineLarge: FontProfile.largeText,
-          bodyMedium: FontProfile.mediumText,
-          labelSmall: FontProfile.caption,
+      ],
+      child: MaterialApp(
+        title: 'edu one',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          textTheme: TextTheme(
+            headlineLarge: FontProfile.largeText,
+            bodyMedium: FontProfile.mediumText,
+            labelSmall: FontProfile.caption,
+          ),
+          useMaterial3: true,
+          colorScheme: ColorProfile.light,
         ),
-        useMaterial3: true,
-        colorScheme: ColorProfile.dark,
+        darkTheme: ThemeData(
+          textTheme: TextTheme(
+            headlineLarge: FontProfile.largeText,
+            bodyMedium: FontProfile.mediumText,
+            labelSmall: FontProfile.caption,
+          ),
+          useMaterial3: true,
+          colorScheme: ColorProfile.dark,
+        ),
+        themeMode: ThemeMode.system,
+        home: const AuthGate(),
       ),
-      themeMode: ThemeMode.system,
-      home: const AuthGate(),
     );
   }
 }
@@ -85,9 +96,7 @@ class AuthGate extends StatelessWidget {
         }
 
         final userData = snapshot.data!.data() as Map<String, dynamic>?;
-        final userRole =
-            userData?['role'] ??
-            'Student';
+        final userRole = userData?['role'] ?? 'Student';
 
         switch (userRole) {
           case 'Admin':

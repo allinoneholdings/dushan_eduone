@@ -1,3 +1,4 @@
+import 'package:edu_one/providers/login_provider.dart';
 import 'package:edu_one/screens/admin/admin_navigation.dart';
 import 'package:edu_one/signup.dart';
 import 'package:edu_one/utils/snackbar_helper.dart';
@@ -6,7 +7,8 @@ import 'package:edu_one/widgets/custom_text.dart';
 import 'package:edu_one/widgets/custom_text_form_field.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:edu_one/services/auth_service.dart'; // Import the AuthService class
+import 'package:edu_one/services/auth_service.dart';
+import 'package:provider/provider.dart'; // Import the AuthService class
 
 class SignIn extends StatefulWidget {
   const SignIn({super.key});
@@ -19,14 +21,13 @@ class _SignInState extends State<SignIn> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
-  final AuthService _authService =
-      AuthService(); // Create an instance of AuthService
-  bool _isSpinKitLoaded = false;
-
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+
+    final loginProvider = context.watch<LoginProvider>();
+
 
     return Scaffold(
       appBar: AppBar(
@@ -139,7 +140,42 @@ class _SignInState extends State<SignIn> {
                     ),
                     const SizedBox(height: 48.0),
                     CustomFilledButton(
-                      onPressed: _handleSignIn,
+                      onPressed: () {
+                        if (_formKey.currentState?.validate() == true) {
+                          context
+                              .read<LoginProvider>()
+                              .handleSignIn(
+                                email: _emailController.text.trim(),
+                                password: _passwordController.text.trim(),
+                              )
+                              .then((_) {
+                                if(mounted){
+                                  SnackBarHelper.show(context, 'Signed in successfully!');
+                                  Navigator.pushAndRemoveUntil(
+                                    context,
+                                    MaterialPageRoute(builder: (context) => AdminNavigation()),
+                                        (Route<dynamic> route) => false, // Remove all previous routes
+                                  );
+                                }
+
+                          })
+                              .catchError((e) {
+                            String message = 'An unexpected error occurred. Please try again.';
+                            if (e is FirebaseAuthException) {
+                              if (e.code == 'user-not-found') {
+                                message = 'No user found for that email.';
+                              } else if (e.code == 'wrong-password') {
+                                message = 'Wrong password provided for that user.';
+                              } else {
+                                message = 'Invalid email or password. Please try again.';
+                              }
+                            }
+                            if(mounted){
+                              SnackBarHelper.show(context, message, isError: true);
+                            }
+                          });
+                        }
+                      },
                       text: 'Sign In',
                     ),
                     const SizedBox(height: 24.0),
@@ -175,7 +211,7 @@ class _SignInState extends State<SignIn> {
                 ),
               ),
             ),
-            if (_isSpinKitLoaded)
+            if (loginProvider.isSpinKitLoaded)
               Container(
                 color: colorScheme.surface.withAlpha(200),
                 child: Center(
@@ -186,56 +222,6 @@ class _SignInState extends State<SignIn> {
         ),
       ),
     );
-  }
-
-  // New method to handle the sign-in process
-  Future<void> _handleSignIn() async {
-    if (_formKey.currentState?.validate() == true) {
-      setState(() {
-        _isSpinKitLoaded = true;
-      });
-
-      try {
-        await _authService.signInWithEmailAndPassword(
-          email: _emailController.text.trim(),
-          password: _passwordController.text.trim(),
-        );
-
-        if (mounted) {
-          SnackBarHelper.show(context, 'Signed in successfully!');
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (context) => AdminNavigation()),
-            (Route<dynamic> route) => false, // Remove all previous routes
-          );
-        }
-      } on FirebaseAuthException catch (e) {
-        String message;
-        if (e.code == 'user-not-found') {
-          message = 'No user found for that email.';
-        } else if (e.code == 'wrong-password') {
-          message = 'Wrong password provided for that user.';
-        } else {
-          message = 'Invalid email or password. Please try again.';
-        }
-        if (mounted) {
-          SnackBarHelper.show(context, message, isError: true);
-        }
-      } catch (e) {
-        debugPrint('Error during sign in: $e');
-        if (mounted) {
-          SnackBarHelper.show(
-            context,
-            'An unexpected error occurred. Please try again.',
-            isError: true,
-          );
-        }
-      } finally {
-        setState(() {
-          _isSpinKitLoaded = false;
-        });
-      }
-    }
   }
 
   @override
