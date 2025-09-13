@@ -4,7 +4,7 @@ import 'package:flutter/cupertino.dart';
 import '../services/auth_service.dart';
 import '../utils/snackbar_helper.dart';
 
-class LoginProvider extends ChangeNotifier {
+class SigninProvider extends ChangeNotifier {
   bool _isSpinKitLoaded = false;
   final AuthService _authService = AuthService();
 

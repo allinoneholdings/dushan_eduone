@@ -1,11 +1,14 @@
+import 'package:edu_one/providers/signup_provider.dart';
 import 'package:edu_one/signin.dart';
 import 'package:edu_one/utils/snackbar_helper.dart';
+import 'package:edu_one/widgets/custom_dropdown.dart';
 import 'package:edu_one/widgets/custom_filled_button.dart';
 import 'package:edu_one/widgets/custom_text.dart';
 import 'package:edu_one/widgets/custom_text_form_field.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:provider/provider.dart';
 
 class SignUp extends StatefulWidget {
   const SignUp({super.key});
@@ -21,83 +24,13 @@ class _SignUpState extends State<SignUp> {
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
       TextEditingController();
-  bool _isSpinKitLoaded = false;
   String? _selectedRole;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-
-  Future<void> _handleSignUp() async {
-    if (_formKey.currentState?.validate() == true && _selectedRole != null) {
-      setState(() {
-        _isSpinKitLoaded = true;
-      });
-
-      try {
-        final userCredential = await _auth.createUserWithEmailAndPassword(
-          email: _emailController.text.trim(),
-          password: _passwordController.text.trim(),
-        );
-
-        // Update the user's display name
-        await userCredential.user?.updateDisplayName(
-          _nameController.text.trim(),
-        );
-
-        // Save user data to Firestore
-        await _firestore.collection('users').doc(userCredential.user?.uid).set({
-          'name': _nameController.text.trim(),
-          'email': _emailController.text.trim(),
-          'role': _selectedRole,
-          'createdAt': FieldValue.serverTimestamp(),
-        });
-
-        if (mounted) {
-          SnackBarHelper.show(context, 'Account created as $_selectedRole!');
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (context) => const SignIn()),
-            (Route<dynamic> route) => false, // Remove all previous routes
-          );
-          // Navigator.pop(context);
-        }
-      } on FirebaseAuthException catch (e) {
-        String message;
-        if (e.code == 'weak-password') {
-          message = 'The password provided is too weak.';
-        } else if (e.code == 'email-already-in-use') {
-          message = 'An account already exists for that email.';
-        } else {
-          message = 'An unexpected error occurred. Please try again.';
-        }
-        if (mounted) {
-          SnackBarHelper.show(context, message, isError: true);
-        }
-      } catch (e) {
-        if (mounted) {
-          SnackBarHelper.show(
-            context,
-            'Failed to create account. Please try again.',
-            isError: true,
-          );
-        }
-      } finally {
-        setState(() {
-          _isSpinKitLoaded = false;
-        });
-      }
-    } else {
-      SnackBarHelper.show(
-        context,
-        'Please select an account type.',
-        isError: true,
-      );
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final signupProvider = context.watch<SignupProvider>();
 
     return Scaffold(
       appBar: AppBar(
@@ -223,12 +156,71 @@ class _SignUpState extends State<SignUp> {
                     const SizedBox(height: 16.0),
                     CustomText(text: 'Account Type'),
                     const SizedBox(height: 8.0),
-                    _buildRoleDropdown(
-                      context,
-                    ), // New widget for role selection
+                    CustomDropdown(
+                      value: _selectedRole,
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedRole = value;
+                        });
+                      },
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please select a role.';
+                        }
+                        return null;
+                      },
+                    ),
                     const SizedBox(height: 48.0),
                     CustomFilledButton(
-                      onPressed: _handleSignUp,
+                      onPressed: () {
+                        if (_formKey.currentState?.validate() == true) {
+                          context
+                              .read<SignupProvider>()
+                              .handleSignUp(
+                                email: _emailController.text.trim(),
+                                password: _passwordController.text.trim(),
+                                name: _nameController.text.trim(),
+                                role:
+                                    _selectedRole != null
+                                        ? _selectedRole!
+                                        : 'Student',
+                              )
+                              .then((_) {
+                                SnackBarHelper.show(
+                                  context,
+                                  'Account created as $_selectedRole!',
+                                );
+                                Navigator.pushAndRemoveUntil(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const SignIn(),
+                                  ),
+                                  (Route<dynamic> route) =>
+                                      false, // Remove all previous routes
+                                );
+                              })
+                              .catchError((e) {
+                                String message;
+                                if (e.code == 'weak-password') {
+                                  message =
+                                      'The password provided is too weak.';
+                                } else if (e.code == 'email-already-in-use') {
+                                  message =
+                                      'An account already exists for that email.';
+                                } else {
+                                  message =
+                                      'An unexpected error occurred. Please try again.';
+                                }
+                                if (mounted) {
+                                  SnackBarHelper.show(
+                                    context,
+                                    message,
+                                    isError: true,
+                                  );
+                                }
+                              });
+                        }
+                      },
                       text: 'Create Account',
                     ),
                     const SizedBox(height: 24.0),
@@ -260,7 +252,7 @@ class _SignUpState extends State<SignUp> {
                 ),
               ),
             ),
-            if (_isSpinKitLoaded)
+            if (signupProvider.isSpinKitLoaded)
               Container(
                 color: colorScheme.surface.withAlpha(200),
                 child: Center(
@@ -268,39 +260,6 @@ class _SignUpState extends State<SignUp> {
                 ),
               ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRoleDropdown(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainer,
-        borderRadius: BorderRadius.circular(8.0),
-        border: Border.all(color: colorScheme.outlineVariant, width: 2.0),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: _selectedRole,
-          hint: Text(
-            'Select Role',
-            style: TextStyle(color: colorScheme.onSurfaceVariant),
-          ),
-          isExpanded: true,
-          style: TextStyle(color: colorScheme.onSurface),
-          dropdownColor: colorScheme.surfaceContainer,
-          items: const [
-            DropdownMenuItem(value: 'Student', child: Text('Student')),
-            DropdownMenuItem(value: 'Staff', child: Text('Staff')),
-          ],
-          onChanged: (String? newValue) {
-            setState(() {
-              _selectedRole = newValue;
-            });
-          },
         ),
       ),
     );

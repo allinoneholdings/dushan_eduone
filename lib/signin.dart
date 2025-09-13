@@ -1,4 +1,4 @@
-import 'package:edu_one/providers/login_provider.dart';
+import 'package:edu_one/providers/signin_provider.dart';
 import 'package:edu_one/screens/admin/admin_navigation.dart';
 import 'package:edu_one/signup.dart';
 import 'package:edu_one/utils/snackbar_helper.dart';
@@ -26,7 +26,7 @@ class _SignInState extends State<SignIn> {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
-    final loginProvider = context.watch<LoginProvider>();
+    final loginProvider = context.watch<SigninProvider>();
 
 
     return Scaffold(
@@ -143,7 +143,7 @@ class _SignInState extends State<SignIn> {
                       onPressed: () {
                         if (_formKey.currentState?.validate() == true) {
                           context
-                              .read<LoginProvider>()
+                              .read<SigninProvider>()
                               .handleSignIn(
                                 email: _emailController.text.trim(),
                                 password: _passwordController.text.trim(),

@@ -1,4 +1,5 @@
-import 'package:edu_one/providers/login_provider.dart';
+import 'package:edu_one/providers/signin_provider.dart';
+import 'package:edu_one/providers/signup_provider.dart';
 import 'package:edu_one/screens/admin/admin_navigation.dart';
 import 'package:edu_one/screens/staff/staff_navigation.dart'; // New import for staff navigation
 import 'package:edu_one/screens/student/student_navigation.dart';
@@ -32,11 +33,8 @@ class MyApp extends StatelessWidget {
     );
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(
-          create: (context) {
-            return LoginProvider();
-          },
-        ),
+        ChangeNotifierProvider(create: (context) => SigninProvider()),
+        ChangeNotifierProvider(create: (context) => SignupProvider()),
       ],
       child: MaterialApp(
         title: 'edu one',
